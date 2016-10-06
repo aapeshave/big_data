@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Configuration;
 @EnableAutoConfiguration
 @ComponentScan(basePackages = {
         "com.demo.service",
+        "com.demo.service.impl",
         "com.demo.controller",
-        "com.demo.service",
         "com.demo.pojo"})
 public class DemoApplication {
 
