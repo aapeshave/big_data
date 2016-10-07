@@ -26,11 +26,4 @@ public class DemoApplication {
         SpringApplication.run(DemoApplication.class, args);
     }
 
-
-    @Bean
-    public JSONObject getPersonSchema(){
-        InputStream stream =  SpringApplication.class.getResourceAsStream("resources/person-schema.json");
-        String strSteam = stream.toString();
-                return new JSONObject();
-    }
 }

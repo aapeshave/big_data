@@ -50,14 +50,6 @@ public class PersonController {
     private Boolean isPersonSchemaValidated(String jsonData, String jsonSchema)
     {
         JSONParser parser = new JSONParser();
-
-        try {
-            String someList = (String) parser.parse(new FileReader("person-schema.json"));
-            System.out.println("Printing String:" + someList);
-        } catch (IOException | ParseException e) {
-            e.printStackTrace();
-        }
-
         return Boolean.FALSE;
     }
 }
