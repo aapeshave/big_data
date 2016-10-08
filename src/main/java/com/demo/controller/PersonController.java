@@ -8,6 +8,8 @@ import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.github.fge.jsonschema.main.JsonValidator;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 @RestController
+@Api(description = "API to do operations on person")
 public class PersonController {
 
 
@@ -32,14 +35,20 @@ public class PersonController {
     @Autowired
     PersonService personService;
 
+
     @GET
     @RequestMapping("/person/{uuid}")
+    @ApiOperation(value = "Find person using UUID",
+            response = String.class)
     public String returnPerson(@PathVariable("uuid") String id) {
         return personService.getPerson(id);
     }
 
+
     @POST
     @RequestMapping("/person")
+    @ApiOperation(value = "Create a person",
+            response = String.class)
     public String addPerson(@RequestBody String body, HttpServletResponse response) {
 
         try {

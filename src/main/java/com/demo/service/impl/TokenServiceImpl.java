@@ -4,8 +4,9 @@ import com.demo.controller.AccessTokenController;
 import com.demo.pojo.AccessToken;
 import com.demo.pojo.User;
 import com.demo.service.TokenService;
+import org.springframework.stereotype.Service;
 
-
+@Service
 public class TokenServiceImpl
     implements TokenService
 {

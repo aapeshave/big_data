@@ -19,6 +19,7 @@ import java.io.InputStream;
         "com.demo.service",
         "com.demo.service.impl",
         "com.demo.controller",
+        "com.demo.configuration",
         "com.demo.pojo"})
 public class DemoApplication {
 
