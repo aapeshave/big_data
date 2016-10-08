@@ -8,11 +8,8 @@ public class Person {
     private String email;
     private String uid;
 
-    private User userAccount;
-
     public Person()
     {
-        this.userAccount = new User();
     }
 
     public Person(String firstName, String lastName, String email) {
@@ -44,14 +41,6 @@ public class Person {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public User getUserAccount() {
-        return userAccount;
-    }
-
-    public void setUserAccount(User userAccount) {
-        this.userAccount = userAccount;
     }
 
     public String getUid() {

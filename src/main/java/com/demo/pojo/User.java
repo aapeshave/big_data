@@ -14,8 +14,11 @@ public class User
     private String uid;
     private List<AccessToken> tokens;
 
+    private Person person;
+
     public User()
     {
+        this.person = new Person();
         this.createdOn = new Date();
         this.tokens = new ArrayList<>();
     }
