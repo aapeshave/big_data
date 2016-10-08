@@ -1,6 +1,8 @@
 package com.demo.pojo;
 
 
+import org.joda.time.DateTime;
+
 import java.util.Date;
 
 public class AccessToken
@@ -13,13 +15,14 @@ public class AccessToken
     private String role;
     private String tokenUid;
 
-    public AccessToken(String tokenId, String issuer, Date createdOn, Date validTill, String accessUrl, String role) {
+    public AccessToken(String tokenId, String issuer, Date validTill, String accessUrl, String role, String tokenUid) {
         this.tokenId = tokenId;
         this.issuer = issuer;
-        this.createdOn = createdOn;
+        this.createdOn = new Date();
         this.validTill = validTill;
         this.accessUrl = accessUrl;
         this.role = role;
+        this.tokenUid = tokenUid;
     }
 
     public String getTokenId() {

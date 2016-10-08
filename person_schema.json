@@ -16,6 +16,9 @@
     },
     "password": {
       "type": "string"
+    },
+    "role": {
+      "type": "string"
     }
   },
   "required": [
@@ -23,6 +26,7 @@
     "lastName",
     "email",
     "username",
-    "password"
+    "password",
+    "role"
   ]
 }
