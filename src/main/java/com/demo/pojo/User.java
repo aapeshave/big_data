@@ -11,7 +11,7 @@ public class User
     private String password;
     private Date createdOn;
     private String role;
-    private String uid;
+    private String userUid;
     private List<AccessToken> tokens;
 
     private Person person;
@@ -24,9 +24,19 @@ public class User
     }
 
     public User(String userName, String password) {
-        super();
+        this();
         this.userName = userName;
         this.password = password;
+    }
+
+    public User(String userName, String password, String firstName, String lastName, String email)
+    {
+        this(userName, password);
+        this.person = new Person(firstName, lastName, email);
+    }
+
+    public Person getPerson() {
+        return person;
     }
 
     public String getUserName() {
@@ -61,18 +71,18 @@ public class User
         return tokens;
     }
 
-    public String getUid() {
-        return uid;
+    public String getUserUid() {
+        return userUid;
     }
 
-    public void setUid(String uid) {
-        this.uid = uid;
+    public void setUserUid(String userUid) {
+        this.userUid = userUid;
     }
 
     @Override
     public String toString() {
         return "User{" +
-                "uid='" + uid + '\'' +
+                "userUid='" + userUid + '\'' +
                 ", role='" + role + '\'' +
                 ", createdOn=" + createdOn +
                 ", password='" + password + '\'' +

@@ -33,10 +33,9 @@ public class PersonController {
     PersonService personService;
 
     @GET
-    @RequestMapping("/person/{id}")
-    public String returnPerson(@PathVariable("id") Integer id) {
-        System.out.print(id);
-        return id.toString();
+    @RequestMapping("/person/{uuid}")
+    public String returnPerson(@PathVariable("uuid") String id) {
+        return personService.getPerson(id);
     }
 
     @POST
@@ -45,7 +44,7 @@ public class PersonController {
 
         try {
             isPersonSchemaValidated(body, "/Users/ajinkya/IdeaProjects/spring_boot_check/person_schema.json");
-            return personService.addPerson(body);
+            return personService.processAndAddPerson(body);
         } catch (BadRequestException e) {
             try {
                 response.sendError(400, e.getMessage());
@@ -53,7 +52,7 @@ public class PersonController {
                 e1.printStackTrace();
             }
         }
-        return "";
+        return null;
     }
 
     private Boolean isPersonSchemaValidated(String jsonData, String jsonSchemapath) throws BadRequestException {

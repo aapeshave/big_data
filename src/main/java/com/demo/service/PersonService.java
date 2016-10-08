@@ -9,5 +9,12 @@ public interface PersonService {
      * @param personData
      * @return
      */
-    String addPerson(String personData);
+    String processAndAddPerson(String personData);
+
+    /**
+     * Return person data
+     * @param personUID
+     * @return
+     */
+    String getPerson(String personUID);
 }

@@ -6,7 +6,7 @@ public class Person {
     private String firstName;
     private String lastName;
     private String email;
-    private String uid;
+    private String personUid;
 
     public Person()
     {
@@ -43,12 +43,12 @@ public class Person {
         this.email = email;
     }
 
-    public String getUid() {
-        return uid;
+    public String getPersonUid() {
+        return personUid;
     }
 
-    public void setUid(String uid) {
-        this.uid = uid;
+    public void setPersonUid(String personUid) {
+        this.personUid = personUid;
     }
 
     @Override
@@ -57,7 +57,7 @@ public class Person {
                 "firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
-                ", uid='" + uid + '\'' +
+                ", personUid='" + personUid + '\'' +
                 '}';
     }
 }

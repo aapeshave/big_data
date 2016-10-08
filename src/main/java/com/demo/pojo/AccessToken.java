@@ -11,7 +11,7 @@ public class AccessToken
     private Date validTill;
     private String accessUrl;
     private String role;
-    private String uid;
+    private String tokenUid;
 
     public AccessToken(String tokenId, String issuer, Date createdOn, Date validTill, String accessUrl, String role) {
         this.tokenId = tokenId;
@@ -70,18 +70,18 @@ public class AccessToken
         this.role = role;
     }
 
-    public String getUid() {
-        return uid;
+    public String getTokenUid() {
+        return tokenUid;
     }
 
-    public void setUid(String uid) {
-        this.uid = uid;
+    public void setTokenUid(String tokenUid) {
+        this.tokenUid = tokenUid;
     }
 
     @Override
     public String toString() {
         return "AccessToken{" +
-                "uid='" + uid + '\'' +
+                "tokenUid='" + tokenUid + '\'' +
                 ", role='" + role + '\'' +
                 ", accessUrl='" + accessUrl + '\'' +
                 ", validTill=" + validTill +

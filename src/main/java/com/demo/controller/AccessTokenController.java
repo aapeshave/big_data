@@ -63,14 +63,10 @@ public class AccessTokenController {
             System.out.println("Expiration: " + claims.getExpiration());
         } catch (ExpiredJwtException e) {
             e.printStackTrace();
-        } catch (UnsupportedJwtException e) {
-            e.printStackTrace();
-        } catch (MalformedJwtException e) {
+        } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
             e.printStackTrace();
         } catch (SignatureException e) {
            response.sendError(403, "Can not validate token");
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
         }
         return token;
     }
