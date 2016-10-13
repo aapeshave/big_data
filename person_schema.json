@@ -19,6 +19,9 @@
     },
     "role": {
       "type": "string"
+    },
+    "SSN": {
+      "type": "string"
     }
   },
   "required": [
