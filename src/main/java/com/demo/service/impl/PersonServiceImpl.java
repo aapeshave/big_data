@@ -5,6 +5,7 @@ import com.demo.pojo.AccessToken;
 import com.demo.pojo.User;
 import com.demo.service.PersonService;
 import com.demo.service.TokenService;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONObject;

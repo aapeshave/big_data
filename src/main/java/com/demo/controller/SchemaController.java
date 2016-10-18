@@ -7,11 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import java.util.Map;
@@ -47,6 +45,24 @@ public class SchemaController {
         {
             return schemaService.getSchemaFromRedis(schemaPath);
         }
+        return null;
+    }
+
+    @DELETE
+    @RequestMapping(value = "/{uuid}", method = RequestMethod.DELETE)
+    public boolean deleteSchema(@PathVariable("uuid") String schemaPath)
+    {
+        if (!StringUtils.isBlank(schemaPath))
+        {
+            return schemaService.deleteSchemaFromRedis(schemaPath);
+        }
+        return Boolean.FALSE;
+    }
+
+    @RequestMapping(value = "/{uuid}/{propertyName}", method = RequestMethod.PATCH)
+    public String updateSchema(@PathVariable("uuid") String schemaPath, @PathVariable("propertyName") String propertyName, @RequestParam String value)
+    {
+        System.out.println("schemaPAth: "+ schemaPath +"property Name: "+ propertyName);
         return null;
     }
 }

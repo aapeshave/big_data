@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
@@ -68,6 +69,13 @@ public class TokenServiceImpl
             throw e;
         }
         return token;
+    }
+
+    @Override
+    public JSONObject createAccessToken(String userUid, String role, String subject) throws JsonProcessingException {
+        AccessToken accessToken = createAccessTokenAPI(userUid, role, subject);
+        
+        return null;
     }
 
     private Date getNextYearDate()
