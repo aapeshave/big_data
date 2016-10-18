@@ -1,6 +1,8 @@
 package com.demo.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Service;
 
 /**
@@ -13,5 +15,5 @@ public interface UserService {
      * @param userObject
      * @return
      */
-    String addUser(JSONObject userObject);
+    String addUser(JSONObject userObject) throws JsonProcessingException, ParseException;
 }

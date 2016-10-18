@@ -9,6 +9,8 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
@@ -72,10 +74,12 @@ public class TokenServiceImpl
     }
 
     @Override
-    public JSONObject createAccessToken(String userUid, String role, String subject) throws JsonProcessingException {
+    public JSONObject createAccessToken(String userUid, String role, String subject) throws JsonProcessingException, ParseException {
         AccessToken accessToken = createAccessTokenAPI(userUid, role, subject);
-        
-        return null;
+        ObjectMapper mapper = new ObjectMapper();
+        JSONParser parser = new JSONParser();
+        JSONObject object = (JSONObject) parser.parse(mapper.writeValueAsString(accessToken));
+        return object;
     }
 
     private Date getNextYearDate()

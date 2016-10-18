@@ -5,6 +5,7 @@ import com.demo.controller.AccessTokenController;
 import com.demo.pojo.AccessToken;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 
 public interface TokenService
 {
@@ -18,5 +19,5 @@ public interface TokenService
 
     AccessToken createAccessTokenAPI(String userUid, String role, String subject) throws JsonProcessingException;
 
-    JSONObject createAccessToken(String userUid, String role, String subject) throws JsonProcessingException;
+    JSONObject createAccessToken(String userUid, String role, String subject) throws JsonProcessingException, ParseException;
 }

@@ -1,6 +1,7 @@
 package com.demo.controller;
 
 import com.demo.service.SchemaService;
+import com.demo.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -28,6 +29,9 @@ public class UserController {
     @Autowired
     SchemaService schemaService;
 
+    @Autowired
+    UserService userService;
+
     @POST
     @RequestMapping("/user")
     @ApiOperation(value = "Create a user",
@@ -41,7 +45,8 @@ public class UserController {
                 JSONParser parser = new JSONParser();
                 try {
                     JSONObject user = (JSONObject) parser.parse(body);
-
+                    String s = userService.addUser(user);
+                    return s;
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
