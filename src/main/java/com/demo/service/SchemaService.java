@@ -1,6 +1,8 @@
 package com.demo.service;
 
 
+import org.json.simple.parser.ParseException;
+
 import java.io.IOException;
 
 public interface SchemaService {
@@ -9,7 +11,7 @@ public interface SchemaService {
      * @param jsonSchema
      * @return
      */
-    String addSchemaToRedis(String jsonSchema, String objectName);
+    String addSchemaToRedis(String jsonSchema, String objectName) throws ParseException;
 
     /**
      * Returns schema as string from REDIS

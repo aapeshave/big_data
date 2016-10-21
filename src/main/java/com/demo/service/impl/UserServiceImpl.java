@@ -6,8 +6,11 @@ import com.demo.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
@@ -17,10 +20,10 @@ import java.util.Map;
  * Created by ajinkya on 10/17/16.
  */
 @Service
+
 public class UserServiceImpl
     implements UserService
 {
-
     private String PERSON_COUNT = "PERSON_COUNT";
 
     private String USER_COUNT = "USER_COUNT";
@@ -58,6 +61,15 @@ public class UserServiceImpl
         response.put("Authorization Header", token.get("tokenUid"));
 
         return response.toJSONString();
+    }
+
+    @Override
+    public String getUser(String userPath) throws ParseException {
+        Jedis jedis = new Jedis("localhost");
+        String result = jedis.get(userPath);
+        JSONObject object = new JSONObject((JSONObject) new JSONParser().parse(result));
+        //object.remove("tokens");
+        return object.toJSONString();
     }
 
     private void processKeys(JSONObject userObject, Jedis jedis, JSONObject personObject) {

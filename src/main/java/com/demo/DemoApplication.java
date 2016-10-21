@@ -20,6 +20,7 @@ import java.io.InputStream;
         "com.demo.service.impl",
         "com.demo.controller",
         "com.demo.configuration",
+        "com.demo.filter",
         "com.demo.pojo"})
 public class DemoApplication {
 

@@ -16,4 +16,11 @@ public interface UserService {
      * @return
      */
     String addUser(JSONObject userObject) throws JsonProcessingException, ParseException;
+
+    /**
+     *
+     * @param userPath
+     * @return
+     */
+    String getUser(String userPath) throws ParseException;
 }
