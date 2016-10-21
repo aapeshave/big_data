@@ -9,6 +9,7 @@ import io.jsonwebtoken.SignatureException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -19,8 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import java.io.IOException;
-
-import org.apache.commons.lang3.StringUtils.*;
+import java.util.List;
 
 /**
  * Created by ajinkya on 10/17/16.
@@ -65,64 +65,67 @@ public class UserController {
     @GET
     @RequestMapping("/user/{userUid}")
     @ResponseBody
-    public String getPerson(@PathVariable("userUid") String userUid)
-    {
-        if (!userUid.isEmpty()){
+    public String getPerson(@PathVariable("userUid") String userUid) {
+        if (!userUid.isEmpty()) {
             String result;
             try {
                 result = userService.getUser(userUid);
             } catch (ParseException e) {
                 throw new NotFoundException("User Not Found" + e);
             }
-            if (result!=null)
-            {
+            if (result != null) {
                 return result;
-            }
-            else
+            } else
                 throw new NotFoundException("User Not Found");
-        }
-        else
-        {
+        } else {
             throw new BadRequestException("Invalid user uid");
         }
     }
 
     @RequestMapping(value = "/user/{userUid}", method = RequestMethod.PATCH)
-    public String patchUser(@PathVariable("userUid") String userUid,
+    public @ResponseBody String patchUser(@PathVariable("userUid") String userUid,
                             @RequestHeader String token,
                             @RequestParam String parameterName,
                             @RequestBody String parameterValue,
                             HttpServletResponse response) throws IOException {
-        if(isTokenVaidated(token, response))
+        if (isTokenValidated(token, response, userUid))
         {
-        	
-        }
-        else
-        {
-        	
+            if (schemaService.validateFieldInSchema("SCHEMA__User", parameterName))
+            {
+                try {
+                    String s = userService.updateUser(userUid, parameterName, parameterValue);
+                    return s;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    response.sendError(500, "Our Servers are having problems");
+                }
+
+            }
+            else
+            {
+                response.sendError(401, "Bad Request. Parameter doesn't match schema");
+            }
+        } else {
+            response.sendError(500, "Our Servers are having problems");
         }
         return null;
     }
 
-	private Boolean isTokenVaidated(String tokenBody, HttpServletResponse response) throws IOException {
-		if (!StringUtils.isBlank(tokenBody))
-        {
+    private Boolean isTokenValidated(String tokenBody, HttpServletResponse response, String userUid) throws IOException {
+        if (!StringUtils.isBlank(tokenBody)) {
             try {
-                if (tokenService.isTokenValidated(tokenBody))
-                {
+                if (tokenService.isTokenValidated(tokenBody, userUid)) {
                     return Boolean.TRUE;
                 }
             } catch (ExpiredJwtException e) {
                 response.sendError(401, "Token is expired");
             } catch (SignatureException | MalformedJwtException e) {
-               response.sendError(401, "Token is not authorized");
+                response.sendError(401, "Token is not authorized");
             }
-        }
-        else
-        {
+        } else {
             throw new NotAuthorizedException("Token is not missing");
         }
-		return Boolean.FALSE;
-	}
+        return Boolean.FALSE;
+    }
 
 }

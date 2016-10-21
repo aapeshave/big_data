@@ -23,4 +23,6 @@ public interface UserService {
      * @return
      */
     String getUser(String userPath) throws ParseException;
+
+    String updateUser(String userPath, String paramterName, String parameterValue);
 }

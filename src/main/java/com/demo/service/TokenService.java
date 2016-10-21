@@ -25,7 +25,7 @@ public interface TokenService
      * @param tokenBody
      * @return
      */
-    Boolean isTokenValidated(String tokenBody)  throws ExpiredJwtException, SignatureException, MalformedJwtException;
+    Boolean isTokenValidated(String tokenBody, String userUid)  throws ExpiredJwtException, SignatureException, MalformedJwtException;
 
     AccessToken createAccessTokenAPI(String userUid, String role, String subject) throws JsonProcessingException;
 
