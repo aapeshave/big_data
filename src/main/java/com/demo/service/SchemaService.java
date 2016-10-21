@@ -34,4 +34,12 @@ public interface SchemaService {
      * @return
      */
     Boolean validateSchema(String pathToSchema, String data) throws IOException;
+
+    /**
+     *
+     * @param pathToSchema
+     * @param data
+     * @return
+     */
+    Boolean validateFieldInSchema(String pathToSchema, String data);
 }

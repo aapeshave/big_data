@@ -7,6 +7,7 @@ import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.github.fge.jsonschema.main.JsonValidator;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -69,8 +70,7 @@ public class SchemaServiceImpl
     @Override
     public Boolean validateSchema(String pathToSchema, String data) throws IOException {
         String jsonSchema = getSchemaFromRedis(pathToSchema);
-        if (jsonSchema!=null && !(jsonSchema.isEmpty()))
-        {
+        if (jsonSchema != null && !(jsonSchema.isEmpty())) {
             final JsonNode d = JsonLoader.fromString(data);
             final JsonNode s = JsonLoader.fromString(jsonSchema);
 
@@ -83,13 +83,23 @@ public class SchemaServiceImpl
             } catch (ProcessingException e) {
                 e.printStackTrace();
             }
-            if (report !=null) {
+            if (report != null) {
                 if (!report.toString().contains("success")) {
                     throw new BadRequestException(
                             report.toString());
-                }
-                else
+                } else
                     return Boolean.TRUE;
+            }
+        }
+        return Boolean.FALSE;
+    }
+
+    @Override
+    public Boolean validateFieldInSchema(String pathToSchema, String data) {
+        String schema = getSchemaFromRedis(pathToSchema);
+        if (!StringUtils.isBlank(schema)) {
+            if (StringUtils.contains(schema, data)) {
+                return Boolean.TRUE;
             }
         }
         return Boolean.FALSE;
