@@ -1,25 +1,26 @@
 package com.demo.controller;
 
 import com.demo.service.SchemaService;
+import com.demo.service.TokenService;
 import com.demo.service.UserService;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
+import javax.ws.rs.*;
 import java.io.IOException;
+
+import org.apache.commons.lang3.StringUtils.*;
 
 /**
  * Created by ajinkya on 10/17/16.
@@ -34,6 +35,9 @@ public class UserController {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    TokenService tokenService;
 
     @POST
     @RequestMapping("/user")
@@ -81,6 +85,32 @@ public class UserController {
         {
             throw new BadRequestException("Invalid user uid");
         }
+    }
+
+    @RequestMapping(value = "/user/{userUid}", method = RequestMethod.PATCH)
+    public String patchUser(@PathVariable("userUid") String userUid,
+                            @RequestHeader String token,
+                            @RequestParam String parameterName,
+                            @RequestBody String parameterValue,
+                            HttpServletResponse response) throws IOException {
+        if (!StringUtils.isBlank(token))
+        {
+            try {
+                if (tokenService.isTokenValidated(token))
+                {
+                    System.out.println("Validated Token");
+                }
+            } catch (ExpiredJwtException e) {
+                response.sendError(401, "Token is expired");
+            } catch (SignatureException | MalformedJwtException e) {
+               response.sendError(401, "Token is not authorized");
+            }
+        }
+        else
+        {
+            throw new NotAuthorizedException("Token is not missing");
+        }
+        return null;
     }
 
 }

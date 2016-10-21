@@ -62,7 +62,7 @@ public class AccessTokenController {
             System.out.println("Person: " + claims.get("person"));
             System.out.println("Expiration: " + claims.getExpiration());
         } catch (ExpiredJwtException e) {
-            e.printStackTrace();
+            response.sendError(429, "Token is expired");
         } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
             e.printStackTrace();
         } catch (SignatureException e) {

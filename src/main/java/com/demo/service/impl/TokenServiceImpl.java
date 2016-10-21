@@ -5,9 +5,8 @@ import com.demo.pojo.AccessToken;
 import com.demo.service.TokenService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.SignatureException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -16,7 +15,7 @@ import redis.clients.jedis.Jedis;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
-import java.security.Key;
+import java.security.*;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -36,6 +35,24 @@ public class TokenServiceImpl
     public AccessToken createAccessToken(AccessTokenController.TokenEntity tokenEntity, String userUid)
     {
         return null;
+    }
+
+    @Override
+    public Boolean isTokenValidated(String tokenBody) throws ExpiredJwtException, SignatureException, MalformedJwtException
+    {
+        Claims claims;
+        try {
+            claims = Jwts.parser()
+                    .setSigningKey(DatatypeConverter.parseBase64Binary(API_SECRET))
+                    .parseClaimsJws(tokenBody).getBody();
+            System.out.println("Token validated for user: "+ claims.get("user"));
+            return Boolean.TRUE;
+        } catch (UnsupportedJwtException e) {
+            return Boolean.FALSE;
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return Boolean.FALSE;
+        }
     }
 
     @Override
