@@ -93,12 +93,24 @@ public class UserController {
                             @RequestParam String parameterName,
                             @RequestBody String parameterValue,
                             HttpServletResponse response) throws IOException {
-        if (!StringUtils.isBlank(token))
+        if(isTokenVaidated(token, response))
+        {
+        	
+        }
+        else
+        {
+        	
+        }
+        return null;
+    }
+
+	private Boolean isTokenVaidated(String tokenBody, HttpServletResponse response) throws IOException {
+		if (!StringUtils.isBlank(tokenBody))
         {
             try {
-                if (tokenService.isTokenValidated(token))
+                if (tokenService.isTokenValidated(tokenBody))
                 {
-                    System.out.println("Validated Token");
+                    return Boolean.TRUE;
                 }
             } catch (ExpiredJwtException e) {
                 response.sendError(401, "Token is expired");
@@ -110,7 +122,7 @@ public class UserController {
         {
             throw new NotAuthorizedException("Token is not missing");
         }
-        return null;
-    }
+		return Boolean.FALSE;
+	}
 
 }
