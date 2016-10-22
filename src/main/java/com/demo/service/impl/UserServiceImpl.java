@@ -8,16 +8,19 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
 import javax.ws.rs.InternalServerErrorException;
+import java.util.Date;
 import java.util.List;
 
 /**
  * Created by ajinkya on 10/17/16.
  */
 @Service
+@Configurable("jedisConfiguration")
 public class UserServiceImpl
         implements UserService {
     @Autowired
@@ -68,18 +71,21 @@ public class UserServiceImpl
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public String updateUser(String userPath, String parameterName, String parameterValue) {
-        Jedis jedis = new Jedis("localhost");
-        try {
-            JSONObject user = new JSONObject((JSONObject) new JSONParser().parse(jedis.get(userPath)));
+        try (Jedis jedis = new Jedis("localhost")) {
+            JSONObject user = null;
+            user = new JSONObject((JSONObject) new JSONParser().parse(jedis.get(userPath)));
             if (user != null) {
                 Object object = user.get(parameterName);
                 if (object instanceof List) {
                     JSONObject parameterObject = (JSONObject) new JSONParser().parse(parameterValue);
                     JSONArray objectArray = (JSONArray) object;
+                    parameterObject.put("createdOn", getUnixTimestamp());
                     objectArray.add(parameterObject);
                 } else if (object instanceof JSONObject) {
                     JSONObject parameterObject = (JSONObject) new JSONParser().parse(parameterValue);
+                    parameterObject.put("modifiedOn", getUnixTimestamp());
                     user.put(parameterName, parameterObject);
                 } else if (object instanceof String) {
                     user.put(parameterName, parameterValue.toString());
@@ -97,18 +103,26 @@ public class UserServiceImpl
             }
         } catch (ParseException e) {
             throw new InternalServerErrorException("Failed while patching user");
-        } finally {
-            jedis.close();
         }
 
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     private void processKeys(JSONObject userObject, Jedis jedis, JSONObject personObject) {
         String personUid = "person" + "__" + personObject.get("firstName") + "__" + jedis.get(PERSON_COUNT);
         String userUid = "user" + "__" + userObject.get("userName") + "__" + jedis.get(USER_COUNT);
 
         userObject.put("userUid", userUid);
         personObject.put("personUid", personUid);
+
+        userObject.put("createdOn", getUnixTimestamp());
+        personObject.put("createdOn", getUnixTimestamp());
+    }
+
+    private String getUnixTimestamp() {
+        Long unixDate = new Date().getTime()/1000;
+        String unixDateString = unixDate.toString();
+        return unixDateString;
     }
 }

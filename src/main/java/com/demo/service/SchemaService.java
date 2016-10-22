@@ -42,4 +42,11 @@ public interface SchemaService {
      * @return
      */
     Boolean validateFieldInSchema(String pathToSchema, String data);
+
+    /**
+     *
+     * @param schemaBody
+     * @return
+     */
+    String addNewSchema(String schemaBody);
 }

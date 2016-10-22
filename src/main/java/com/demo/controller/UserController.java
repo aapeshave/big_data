@@ -9,7 +9,6 @@ import io.jsonwebtoken.SignatureException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Created by ajinkya on 10/17/16.
@@ -83,15 +81,15 @@ public class UserController {
     }
 
     @RequestMapping(value = "/user/{userUid}", method = RequestMethod.PATCH)
-    public @ResponseBody String patchUser(@PathVariable("userUid") String userUid,
-                            @RequestHeader String token,
-                            @RequestParam String parameterName,
-                            @RequestBody String parameterValue,
-                            HttpServletResponse response) throws IOException {
-        if (isTokenValidated(token, response, userUid))
-        {
-            if (schemaService.validateFieldInSchema("SCHEMA__User", parameterName))
-            {
+    public
+    @ResponseBody
+    String patchUser(@PathVariable("userUid") String userUid,
+                     @RequestHeader String token,
+                     @RequestParam String parameterName,
+                     @RequestBody String parameterValue,
+                     HttpServletResponse response) throws IOException {
+        if (isTokenValidated(token, response, userUid)) {
+            if (schemaService.validateFieldInSchema("SCHEMA__User", parameterName)) {
                 try {
                     String s = userService.updateUser(userUid, parameterName, parameterValue);
                     return s;
@@ -99,10 +97,7 @@ public class UserController {
                     e.printStackTrace();
                     response.sendError(500, "Our Servers are having problems");
                 }
-
-            }
-            else
-            {
+            } else {
                 response.sendError(401, "Bad Request. Parameter doesn't match schema");
             }
         } else {

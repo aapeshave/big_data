@@ -16,6 +16,8 @@ import redis.clients.jedis.Jedis;
 
 import javax.ws.rs.BadRequestException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class SchemaServiceImpl
@@ -103,5 +105,39 @@ public class SchemaServiceImpl
             }
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    public String addNewSchema(String schemaBody) {
+        JSONParser parser =  new JSONParser();
+        Jedis jedis = new Jedis("localhost");
+        try {
+            Map<String, String> response = new HashMap<>();
+            Map<String, Object> schemaObject = (HashMap<String, Object>) parser.parse(schemaBody);
+            Map<String, JSONObject> properties = (HashMap<String, JSONObject>) schemaObject.get("properties");
+            String schemaPrefix = "SCHEMA__";
+            String schemaKey = schemaPrefix + schemaObject.get("objectName");
+            jedis.set(schemaKey, schemaBody);
+            response.put((String) schemaObject.get("objectName"), schemaKey);
+            for (String propertyKey : properties.keySet())
+            {
+                JSONObject property = properties.get(propertyKey);
+                String objectType = (String) property.get("type");
+                if (!(objectType.equals("string")))
+                {
+                    JSONObject newObjectSchema = (JSONObject) property.get("items");
+                    String objectName = (String) property.get("objectName");
+                    schemaKey = schemaPrefix + objectName;
+                    jedis.set(schemaKey, newObjectSchema.toJSONString());
+                    response.put(objectName, schemaKey);
+                }
+            }
+            return response.toString();
+        } catch (ParseException e) {
+            throw new BadRequestException("Schema Generation Failed.Can not parse data");
+        }
+        finally {
+            jedis.close();
+        }
     }
 }
