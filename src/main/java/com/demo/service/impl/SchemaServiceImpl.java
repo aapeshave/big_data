@@ -22,14 +22,14 @@ import java.util.Map;
 @Service
 public class SchemaServiceImpl
         implements SchemaService {
-    public static final String SCHEMA_PREFIX = "SCHEMA";
+    public static final String SCHEMA_PREFIX = "SCHEMA__";
 
     @Override
     public String addSchemaToRedis(String jsonSchema, String objectName) {
         Jedis jedis = new Jedis("localhost");
         try {
-            jedis.set(SCHEMA_PREFIX + "__" + objectName, jsonSchema);
-            return SCHEMA_PREFIX + "__" + objectName;
+            jedis.set(SCHEMA_PREFIX + objectName, jsonSchema);
+            return SCHEMA_PREFIX + objectName;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -115,8 +115,7 @@ public class SchemaServiceImpl
             Map<String, String> response = new HashMap<>();
             Map<String, Object> schemaObject = (HashMap<String, Object>) parser.parse(schemaBody);
             Map<String, JSONObject> properties = (HashMap<String, JSONObject>) schemaObject.get("properties");
-            String schemaPrefix = "SCHEMA__";
-            String schemaKey = schemaPrefix + schemaObject.get("objectName");
+            String schemaKey = SCHEMA_PREFIX + schemaObject.get("objectName");
             jedis.set(schemaKey, schemaBody);
             response.put((String) schemaObject.get("objectName"), schemaKey);
             for (String propertyKey : properties.keySet())
@@ -127,7 +126,7 @@ public class SchemaServiceImpl
                 {
                     JSONObject newObjectSchema = (JSONObject) property.get("items");
                     String objectName = (String) property.get("objectName");
-                    schemaKey = schemaPrefix + objectName;
+                    schemaKey = SCHEMA_PREFIX + objectName;
                     jedis.set(schemaKey, newObjectSchema.toJSONString());
                     response.put(objectName, schemaKey);
                 }

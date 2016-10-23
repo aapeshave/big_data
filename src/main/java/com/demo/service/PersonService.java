@@ -17,4 +17,18 @@ public interface PersonService {
      * @return
      */
     String getPerson(String personUID);
+
+    /**
+     *
+     * @param personBody
+     * @return
+     */
+    String v1AddPerson(String personBody);
+
+    /**
+     *
+     * @param persionUid
+     * @return
+     */
+    String v1GetPerson(String persionUid);
 }
