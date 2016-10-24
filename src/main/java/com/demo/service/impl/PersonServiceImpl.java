@@ -153,7 +153,6 @@ public class PersonServiceImpl
             if (resultObject != null) {
                 for (Object entryKey : resultObject.keySet()) {
                     Object entry = resultObject.get(entryKey);
-                    // System.out.println("Printing entry: " + entry.toString());
                     if (entry instanceof JSONObject) {
                         JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
                         response.put(((JSONObject) entry).get("objectName"), object);
