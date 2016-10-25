@@ -24,5 +24,20 @@ public interface UserService {
      */
     String getUser(String userPath) throws ParseException;
 
+    /**
+     *
+     * @param userPath
+     * @param paramterName
+     * @param parameterValue
+     * @return
+     */
     String updateUser(String userPath, String paramterName, String parameterValue);
+
+    /**
+     *
+     * @param userObject
+     * @return
+     */
+    String newAddUser(JSONObject userObject);
+
 }

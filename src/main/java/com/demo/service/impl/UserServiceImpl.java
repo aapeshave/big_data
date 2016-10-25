@@ -14,7 +14,9 @@ import redis.clients.jedis.Jedis;
 
 import javax.ws.rs.InternalServerErrorException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by ajinkya on 10/17/16.
@@ -107,6 +109,80 @@ public class UserServiceImpl
 
         return null;
     }
+
+    @Override
+    public String newAddUser(JSONObject body) {
+        Jedis jedis = new Jedis("localhost");
+        JSONParser parser = new JSONParser();
+        JSONObject responseObject = new JSONObject();
+        try {
+            Map<String, Object> bodyObj = (HashMap<String, Object>) body;
+            JSONObject personObject = new JSONObject();
+
+            String objectType = null;
+            String uid = null;
+            // Create initial data for personObject
+            processInitialData(jedis, bodyObj, personObject, responseObject);
+
+            for (String propertyKey : bodyObj.keySet()) {
+                Object property = bodyObj.get(propertyKey);
+                if (property instanceof JSONArray) {
+                    JSONArray propertyArray = (JSONArray) property;
+                    objectType = null;
+                    JSONArray objectKeys = new JSONArray();
+                    for (Object object : propertyArray) {
+                        objectType = (String) ((JSONObject) object).get("objectName");
+                        jedis.incr(objectType);
+                        uid = objectType + "__" + jedis.get(objectType);
+                        ((JSONObject) object).put("_createdOn", getUnixTimestamp());
+                        ((JSONObject) object).put("_uid", uid);
+
+                        //Add to Jedis
+                        jedis.set(uid, ((JSONObject) object).toJSONString());
+                        // This is done to create link
+                        objectKeys.add(uid);
+                    }
+                    personObject.put(objectType, objectKeys);
+                    responseObject.put(objectType, objectKeys);
+                } else if (property instanceof JSONObject) {
+                    objectType = (String) ((JSONObject) property).get("objectName");
+                    jedis.incr(objectType);
+                    uid = objectType + "__" + jedis.get(objectType);
+                    ((JSONObject) property).put("_createdOn", getUnixTimestamp());
+                    ((JSONObject) property).put("_uid", uid);
+                    // TODO: Insert to jedis over here
+                    jedis.set(uid, ((JSONObject) property).toJSONString());
+                    // Creating link over here
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("objectType", objectType);
+                    jsonObject.put("objectValue", uid);
+                    personObject.put(objectType, jsonObject);
+                    responseObject.put(objectType, jsonObject);
+                } else {
+                    personObject.put(propertyKey, property);
+                }
+            }
+            // TODO: Insert to jedis over here
+            jedis.set((String) responseObject.get(bodyObj.get("objectName")), personObject.toString());
+            return responseObject.toJSONString();
+
+        } finally {
+            jedis.close();
+        }
+    }
+
+    private void processInitialData(Jedis jedis,
+                                    Map<String, Object> bodyObj,
+                                    JSONObject personObject,
+                                    JSONObject responseObject) {
+        String objectType = (String) bodyObj.get("objectName");
+        jedis.incr(objectType);
+        String uid = objectType + "__" + jedis.get(objectType);
+        personObject.put("_createdOn", getUnixTimestamp());
+        personObject.put("_uid", uid);
+        responseObject.put(objectType, uid);
+    }
+
 
     @SuppressWarnings("unchecked")
     private void processKeys(JSONObject userObject, Jedis jedis, JSONObject personObject) {
