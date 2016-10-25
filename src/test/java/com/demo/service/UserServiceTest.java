@@ -60,6 +60,7 @@ public class UserServiceTest {
     @Test
     public void testNewAddUser() throws Exception {
         JSONObject object = getSampleUserObject(SAMPLE_VALID_USER_BODY);
+        String objectJson = object.toJSONString();
         String s = userService.newAddUser(object);
         System.out.println(s);
     }

@@ -107,7 +107,8 @@ public class SchemaServiceImpl
         return Boolean.FALSE;
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public String addNewSchema(String schemaBody) {
         JSONParser parser =  new JSONParser();
         Jedis jedis = new Jedis("localhost");
@@ -134,7 +135,7 @@ public class SchemaServiceImpl
                     else if (objectType.equals("object"))
                     {
                         newObjectSchema = property;
-                        objectName = (String) property.get("type");
+                        objectName = (String) property.get("objectName");
                     }
 
                     schemaKey = SCHEMA_PREFIX + objectName;
