@@ -20,135 +20,127 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class SchemaServiceImpl
-        implements SchemaService {
-    public static final String SCHEMA_PREFIX = "SCHEMA__";
+public class SchemaServiceImpl implements SchemaService {
+	public static final String SCHEMA_PREFIX = "SCHEMA__";
 
-    @Override
-    public String addSchemaToRedis(String jsonSchema, String objectName) {
-        Jedis jedis = new Jedis("localhost");
-        try {
-            jedis.set(SCHEMA_PREFIX + objectName, jsonSchema);
-            return SCHEMA_PREFIX + objectName;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        } finally {
-            jedis.close();
-        }
-    }
-
-    @Override
-    public String getSchemaFromRedis(String pathToSchema) {
-        Jedis jedis = new Jedis("localhost");
-        try {
-            return jedis.get(pathToSchema);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        } finally {
-            jedis.close();
-        }
-    }
-
-    @Override
-    public Boolean deleteSchemaFromRedis(String pathToSchema) {
-        Jedis jedis = new Jedis("localhost");
-        try {
-            long result = jedis.del(pathToSchema);
-            if (result == 1) {
-                return Boolean.TRUE;
-            } else {
-                return Boolean.FALSE;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        } finally {
-            jedis.close();
-        }
-    }
-
-    @Override
-    public Boolean validateSchema(String pathToSchema, String data) throws IOException {
-        String jsonSchema = getSchemaFromRedis(pathToSchema);
-        if (jsonSchema != null && !(jsonSchema.isEmpty())) {
-            final JsonNode d = JsonLoader.fromString(data);
-            final JsonNode s = JsonLoader.fromString(jsonSchema);
-
-            final JsonSchemaFactory factory = JsonSchemaFactory.byDefault();
-            JsonValidator v = factory.getValidator();
-
-            ProcessingReport report = null;
-            try {
-                report = v.validate(s, d);
-            } catch (ProcessingException e) {
-                e.printStackTrace();
-            }
-            if (report != null) {
-                if (!report.toString().contains("success")) {
-                    throw new BadRequestException(
-                            report.toString());
-                } else
-                    return Boolean.TRUE;
-            }
-        }
-        return Boolean.FALSE;
-    }
-
-    @Override
-    public Boolean validateFieldInSchema(String pathToSchema, String data) {
-        String schema = getSchemaFromRedis(pathToSchema);
-        if (!StringUtils.isBlank(schema)) {
-            if (StringUtils.contains(schema, data)) {
-                return Boolean.TRUE;
-            }
-        }
-        return Boolean.FALSE;
-    }
-
-    @SuppressWarnings("unchecked")
 	@Override
-    public String addNewSchema(String schemaBody) {
-        JSONParser parser =  new JSONParser();
-        Jedis jedis = new Jedis("localhost");
-        try {
-            Map<String, String> response = new HashMap<>();
-            Map<String, Object> schemaObject = (HashMap<String, Object>) parser.parse(schemaBody);
-            Map<String, JSONObject> properties = (HashMap<String, JSONObject>) schemaObject.get("properties");
-            String schemaKey = SCHEMA_PREFIX + schemaObject.get("objectName");
-            jedis.set(schemaKey, schemaObject.toString());
-            response.put((String) schemaObject.get("objectName"), schemaKey);
-            for (String propertyKey : properties.keySet())
-            {
-                JSONObject property = properties.get(propertyKey);
-                String objectType = (String) property.get("type");
-                if (objectType.equals("array") || objectType.equals("object"))
-                {
-                    JSONObject newObjectSchema = new JSONObject();
-                    String objectName = "";
-                    if (objectType.equals("array"))
-                    {
-                        newObjectSchema = (JSONObject) property.get("items");
-                        objectName = (String) newObjectSchema.get("objectName");
-                    }
-                    else if (objectType.equals("object"))
-                    {
-                        newObjectSchema = property;
-                        objectName = (String) property.get("objectName");
-                    }
+	public String addSchemaToRedis(String jsonSchema, String objectName) {
+		Jedis jedis = new Jedis("localhost");
+		try {
+			jedis.set(SCHEMA_PREFIX + objectName, jsonSchema);
+			return SCHEMA_PREFIX + objectName;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			jedis.close();
+		}
+	}
 
-                    schemaKey = SCHEMA_PREFIX + objectName;
-                    jedis.set(schemaKey, newObjectSchema.toJSONString());
-                    response.put(objectName, schemaKey);
-                }
-            }
-            return response.toString();
-        } catch (ParseException e) {
-            throw new BadRequestException("Schema Generation Failed.Can not parse data");
-        }
-        finally {
-            jedis.close();
-        }
-    }
+	@Override
+	public String getSchemaFromRedis(String pathToSchema) {
+		Jedis jedis = new Jedis("localhost");
+		try {
+			return jedis.get(pathToSchema);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			jedis.close();
+		}
+	}
+
+	@Override
+	public Boolean deleteSchemaFromRedis(String pathToSchema) {
+		Jedis jedis = new Jedis("localhost");
+		try {
+			long result = jedis.del(pathToSchema);
+			if (result == 1) {
+				return Boolean.TRUE;
+			} else {
+				return Boolean.FALSE;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			jedis.close();
+		}
+	}
+
+	@Override
+	public Boolean validateSchema(String pathToSchema, String data) throws IOException {
+		String jsonSchema = getSchemaFromRedis(pathToSchema);
+		if (jsonSchema != null && !(jsonSchema.isEmpty())) {
+			final JsonNode d = JsonLoader.fromString(data);
+			final JsonNode s = JsonLoader.fromString(jsonSchema);
+
+			final JsonSchemaFactory factory = JsonSchemaFactory.byDefault();
+			JsonValidator v = factory.getValidator();
+
+			ProcessingReport report = null;
+			try {
+				report = v.validate(s, d);
+			} catch (ProcessingException e) {
+				e.printStackTrace();
+			}
+			if (report != null) {
+				if (!report.toString().contains("success")) {
+					throw new BadRequestException(report.toString());
+				} else
+					return Boolean.TRUE;
+			}
+		}
+		return Boolean.FALSE;
+	}
+
+	@Override
+	public Boolean validateFieldInSchema(String pathToSchema, String data) {
+		String schema = getSchemaFromRedis(pathToSchema);
+		if (!StringUtils.isBlank(schema)) {
+			if (StringUtils.contains(schema, data)) {
+				return Boolean.TRUE;
+			}
+		}
+		return Boolean.FALSE;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public String addNewSchema(String schemaBody) {
+		JSONParser parser = new JSONParser();
+		Jedis jedis = new Jedis("localhost");
+		try {
+			Map<String, String> response = new HashMap<>();
+			Map<String, Object> schemaObject = (HashMap<String, Object>) parser.parse(schemaBody);
+			Map<String, JSONObject> properties = (HashMap<String, JSONObject>) schemaObject.get("properties");
+			String schemaKey = SCHEMA_PREFIX + schemaObject.get("objectName");
+			jedis.set(schemaKey, schemaObject.toString());
+			response.put((String) schemaObject.get("objectName"), schemaKey);
+			for (String propertyKey : properties.keySet()) {
+				JSONObject property = properties.get(propertyKey);
+				String objectType = (String) property.get("type");
+				if (objectType.equals("array") || objectType.equals("object")) {
+					JSONObject newObjectSchema = new JSONObject();
+					String objectName = "";
+					if (objectType.equals("array")) {
+						newObjectSchema = (JSONObject) property.get("items");
+						objectName = (String) newObjectSchema.get("objectName");
+					} else if (objectType.equals("object")) {
+						newObjectSchema = property;
+						objectName = (String) property.get("objectName");
+					}
+
+					schemaKey = SCHEMA_PREFIX + objectName;
+					jedis.set(schemaKey, newObjectSchema.toJSONString());
+					response.put(objectName, schemaKey);
+				}
+			}
+			return response.toString();
+		} catch (ParseException e) {
+			throw new BadRequestException("Schema Generation Failed.Can not parse data");
+		} finally {
+			jedis.close();
+		}
+	}
 }
