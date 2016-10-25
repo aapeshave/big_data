@@ -116,16 +116,27 @@ public class SchemaServiceImpl
             Map<String, Object> schemaObject = (HashMap<String, Object>) parser.parse(schemaBody);
             Map<String, JSONObject> properties = (HashMap<String, JSONObject>) schemaObject.get("properties");
             String schemaKey = SCHEMA_PREFIX + schemaObject.get("objectName");
-            jedis.set(schemaKey, schemaBody);
+            jedis.set(schemaKey, schemaObject.toString());
             response.put((String) schemaObject.get("objectName"), schemaKey);
             for (String propertyKey : properties.keySet())
             {
                 JSONObject property = properties.get(propertyKey);
                 String objectType = (String) property.get("type");
-                if (!(objectType.equals("string")))
+                if (objectType.equals("array") || objectType.equals("object"))
                 {
-                    JSONObject newObjectSchema = (JSONObject) property.get("items");
-                    String objectName = (String) property.get("objectName");
+                    JSONObject newObjectSchema = new JSONObject();
+                    String objectName = "";
+                    if (objectType.equals("array"))
+                    {
+                        newObjectSchema = (JSONObject) property.get("items");
+                        objectName = (String) newObjectSchema.get("objectName");
+                    }
+                    else if (objectType.equals("object"))
+                    {
+                        newObjectSchema = property;
+                        objectName = (String) property.get("type");
+                    }
+
                     schemaKey = SCHEMA_PREFIX + objectName;
                     jedis.set(schemaKey, newObjectSchema.toJSONString());
                     response.put(objectName, schemaKey);
