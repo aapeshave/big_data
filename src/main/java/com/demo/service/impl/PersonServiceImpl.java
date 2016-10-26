@@ -143,7 +143,8 @@ public class PersonServiceImpl
         return null;
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public String v1GetPerson(String personUid) {
         Jedis jedis = new Jedis("localhost");
         JSONObject response = new JSONObject();

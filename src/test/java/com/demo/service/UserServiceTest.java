@@ -60,9 +60,11 @@ public class UserServiceTest {
     @Test
     public void testNewAddUser() throws Exception {
         JSONObject object = getSampleUserObject(SAMPLE_VALID_USER_BODY);
-        String objectJson = object.toJSONString();
         String s = userService.newAddUser(object);
-        System.out.println(s);
+        JSONObject responseObject = (JSONObject) new JSONParser().parse(s);
+        String userKey = (String) responseObject.get("user");
+        responseObject = userService.newGetUser(userKey);
+        System.out.println(responseObject.toJSONString());
     }
 
     private JSONObject getSampleUserObject(String userBody) throws ParseException {

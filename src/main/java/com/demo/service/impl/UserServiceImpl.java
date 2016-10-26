@@ -42,15 +42,7 @@ public class UserServiceImpl
         processKeys(userObject, jedis, personObject);
         userObject.put("person", personObject);
 
-        JSONObject token = tokenService.createAccessToken((String) userObject.get("userUid"), (String) userObject.get("role"), "ACCESS_TOKEN");
-
-        JSONArray tokens = (JSONArray) userObject.get("tokens");
-        if (tokens == null) {
-            tokens = new JSONArray();
-        }
-        assert tokens != null;
-        tokens.add(token);
-        userObject.put("tokens", tokens);
+        JSONObject token = processAndAddToken(userObject);
 
         jedis.set((String) userObject.get("userUid"), userObject.toJSONString());
         jedis.close();
@@ -62,6 +54,19 @@ public class UserServiceImpl
 
         return response.toJSONString();
     }
+
+	private JSONObject processAndAddToken(JSONObject userObject) throws JsonProcessingException, ParseException {
+		JSONObject token = tokenService.createAccessToken((String) userObject.get("userUid"), (String) userObject.get("role"), "ACCESS_TOKEN");
+
+        JSONArray tokens = (JSONArray) userObject.get("tokens");
+        if (tokens == null) {
+            tokens = new JSONArray();
+        }
+        assert tokens != null;
+        tokens.add(token);
+        userObject.put("tokens", tokens);
+		return token;
+	}
 
     @Override
     public String getUser(String userPath) throws ParseException {
@@ -110,7 +115,8 @@ public class UserServiceImpl
         return null;
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public String newAddUser(JSONObject body) {
         Jedis jedis = new Jedis("localhost");
         JSONParser parser = new JSONParser();
@@ -200,5 +206,49 @@ public class UserServiceImpl
         Long unixDate = new Date().getTime()/1000;
         String unixDateString = unixDate.toString();
         return unixDateString;
+    }
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public JSONObject newGetUser(String pathToObject) {
+		Jedis jedis = new Jedis("localhost");
+        JSONObject response = new JSONObject();
+        JSONParser parser = new JSONParser();
+        try {
+            JSONObject resultObject = (JSONObject) new JSONParser().parse(jedis.get(pathToObject));
+            if (resultObject != null) {
+                for (Object entryKey : resultObject.keySet()) {
+                    Object entry = resultObject.get(entryKey);
+                    if (entry instanceof JSONObject) {
+                        JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
+                        response.put(((JSONObject) entry).get("objectType"), object);
+                    } else if (entry instanceof JSONArray) {
+                        JSONArray arrayEntries = new JSONArray();
+                        JSONArray entryArray = (JSONArray) entry;
+                        String objectType = null;
+                        for (Object object : entryArray) {
+                            JSONObject arrayEntry = (JSONObject) parser.parse(jedis.get((String) object));
+                            objectType = (String) arrayEntry.get("objectName");
+                            arrayEntries.add(arrayEntry);
+                        }
+                        response.put(objectType, arrayEntries);
+                    } else {
+                        response.put(entryKey, entry);
+                    }
+                }
+                return response;
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+		return null;
+	}
+	
+	
+	private JSONObject getJSONObjectFromObject(Jedis jedis, JSONObject entry, JSONParser parser) throws ParseException {
+        JSONObject object = entry;
+        String objectString = jedis.get((String) object.get("objectValue"));
+        JSONObject objectMap = (JSONObject) parser.parse(objectString);
+        return objectMap;
     }
 }

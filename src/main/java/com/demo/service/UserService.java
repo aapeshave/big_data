@@ -39,5 +39,12 @@ public interface UserService {
      * @return
      */
     String newAddUser(JSONObject userObject);
+    
+    /**
+     * 
+     * @param pathToObject
+     * @return
+     */
+    JSONObject newGetUser(String pathToObject);
 
 }
