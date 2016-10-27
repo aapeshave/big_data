@@ -42,7 +42,7 @@ public class UserServiceImpl
         processKeys(userObject, jedis, personObject);
         userObject.put("person", personObject);
 
-        JSONObject token = processAndAddToken(userObject);
+        JSONObject token = processAndAddToken(userObject, "tokens", (String) userObject.get("role"), (String) userObject.get("userUid"), null);
 
         jedis.set((String) userObject.get("userUid"), userObject.toJSONString());
         jedis.close();
@@ -55,15 +55,19 @@ public class UserServiceImpl
         return response.toJSONString();
     }
 
-	private JSONObject processAndAddToken(JSONObject userObject) throws JsonProcessingException, ParseException {
-		JSONObject token = tokenService.createAccessToken((String) userObject.get("userUid"), (String) userObject.get("role"), "ACCESS_TOKEN");
+	private JSONObject processAndAddToken(JSONObject userObject, String tokenName, String role, String uid, JSONObject responseObject) throws JsonProcessingException, ParseException {
+		JSONObject token = tokenService.createAccessToken(uid, role, "ACCESS_TOKEN");
 
-        JSONArray tokens = (JSONArray) userObject.get("tokens");
+        JSONArray tokens = (JSONArray) userObject.get(tokenName);
         if (tokens == null) {
             tokens = new JSONArray();
         }
         assert tokens != null;
         tokens.add(token);
+        if (responseObject != null)
+        {
+            responseObject.put("Authorization", token.get("tokenUid"));
+        }
         userObject.put("tokens", tokens);
 		return token;
 	}
@@ -123,12 +127,13 @@ public class UserServiceImpl
         JSONObject responseObject = new JSONObject();
         try {
             Map<String, Object> bodyObj = (HashMap<String, Object>) body;
-            JSONObject personObject = new JSONObject();
+            JSONObject userObject = new JSONObject();
 
             String objectType = null;
             String uid = null;
+            String role = null;
             // Create initial data for personObject
-            processInitialData(jedis, bodyObj, personObject, responseObject);
+            processInitialData(jedis, bodyObj, userObject, responseObject);
 
             for (String propertyKey : bodyObj.keySet()) {
                 Object property = bodyObj.get(propertyKey);
@@ -138,54 +143,70 @@ public class UserServiceImpl
                     JSONArray objectKeys = new JSONArray();
                     for (Object object : propertyArray) {
                         objectType = (String) ((JSONObject) object).get("objectName");
-                        jedis.incr(objectType);
-                        uid = objectType + "__" + jedis.get(objectType);
-                        ((JSONObject) object).put("_createdOn", getUnixTimestamp());
-                        ((JSONObject) object).put("_uid", uid);
-
+                        uid = processAndGetUid(jedis, objectType, (JSONObject) object);
                         //Add to Jedis
                         jedis.set(uid, ((JSONObject) object).toJSONString());
                         // This is done to create link
                         objectKeys.add(uid);
                     }
-                    personObject.put(objectType, objectKeys);
+                    userObject.put(objectType, objectKeys);
                     responseObject.put(objectType, objectKeys);
                 } else if (property instanceof JSONObject) {
                     objectType = (String) ((JSONObject) property).get("objectName");
-                    jedis.incr(objectType);
-                    uid = objectType + "__" + jedis.get(objectType);
-                    ((JSONObject) property).put("_createdOn", getUnixTimestamp());
-                    ((JSONObject) property).put("_uid", uid);
-                    // TODO: Insert to jedis over here
+
+                    if (objectType.equals("role"))
+                    {
+                        role = (String) ((JSONObject)property).get("roleName");
+                    }
+
+                    uid = processAndGetUid(jedis, objectType, (JSONObject) property);
                     jedis.set(uid, ((JSONObject) property).toJSONString());
                     // Creating link over here
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("objectType", objectType);
                     jsonObject.put("objectValue", uid);
-                    personObject.put(objectType, jsonObject);
+                    userObject.put(objectType, jsonObject);
                     responseObject.put(objectType, jsonObject);
                 } else {
-                    personObject.put(propertyKey, property);
+                    userObject.put(propertyKey, property);
                 }
             }
             // TODO: Insert to jedis over here
-            jedis.set((String) responseObject.get(bodyObj.get("objectName")), personObject.toString());
+            if (role != null)
+            {
+                processAndAddToken(userObject, "token", role, (String) userObject.get("_uid"), responseObject);
+            }
+            jedis.set((String) responseObject.get(bodyObj.get("objectName")), userObject.toString());
             return responseObject.toJSONString();
 
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         } finally {
             jedis.close();
         }
+        return null;
+    }
+
+    private String processAndGetUid(Jedis jedis, String objectType, JSONObject object) {
+        String uid;
+        jedis.incr(objectType);
+        uid = objectType + "__" + jedis.get(objectType);
+        object.put("_uid", uid);
+        object.put("_createdOn", getUnixTimestamp());
+        return uid;
     }
 
     private void processInitialData(Jedis jedis,
                                     Map<String, Object> bodyObj,
-                                    JSONObject personObject,
+                                    JSONObject userObject,
                                     JSONObject responseObject) {
         String objectType = (String) bodyObj.get("objectName");
         jedis.incr(objectType);
         String uid = objectType + "__" + jedis.get(objectType);
-        personObject.put("_createdOn", getUnixTimestamp());
-        personObject.put("_uid", uid);
+        userObject.put("_uid", uid);
+        userObject.put("_createdOn", getUnixTimestamp());
         responseObject.put(objectType, uid);
     }
 

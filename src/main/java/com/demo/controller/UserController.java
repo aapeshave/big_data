@@ -123,4 +123,19 @@ public class UserController {
         return Boolean.FALSE;
     }
 
+    @POST
+    @RequestMapping("/v1/user")
+    @ResponseBody
+    public String newAddUser(@RequestBody String body, HttpServletResponse response)
+    {
+        try {
+            JSONObject bodyObject = (JSONObject) new JSONParser().parse(body);
+            String result = userService.newAddUser(bodyObject);
+            return result;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }

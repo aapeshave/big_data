@@ -41,6 +41,18 @@ public class UserServiceTest {
             "  \"createdOn\": \"ullamco in irure\"\n" +
             "}";
 
+    public static final String SAMPLE_USER_2 = "{\n" +
+            "  \"objectName\": \"user\",\n" +
+            "  \"password\": \"labore ut\",\n" +
+            "  \"userName\": \"cillum sed\",\n" +
+            "  \"role\": {\n" +
+            "  \t\"objectName\": \"role\",\n" +
+            "    \"roleId\": \"dolor mollit labore\",\n" +
+            "    \"roleName\": \"admin\"\n" +
+            "  },\n" +
+            "  \"_uid\": \"dolor\",\n" +
+            "  \"createdOn\": \"ullamco in irure\"\n" +
+            "}";
 
     @Before
     public void setUp() throws Exception {
@@ -59,7 +71,7 @@ public class UserServiceTest {
 
     @Test
     public void testNewAddUser() throws Exception {
-        JSONObject object = getSampleUserObject(SAMPLE_VALID_USER_BODY);
+        JSONObject object = getSampleUserObject(SAMPLE_USER_2);
         String s = userService.newAddUser(object);
         JSONObject responseObject = (JSONObject) new JSONParser().parse(s);
         String userKey = (String) responseObject.get("user");
