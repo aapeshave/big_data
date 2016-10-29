@@ -85,8 +85,8 @@ public class TokenServiceImpl
 
         builder.setExpiration(getNextYearDate());
 
-        AccessToken token = new AccessToken(jedis.get(TOKEN_COUNT), ISSUER, getNextYearDate(), URL, role, builder.compact());
         String tokenId = "token" + "__" + jedis.get(TOKEN_COUNT);
+        AccessToken token = new AccessToken(tokenId, ISSUER, getNextYearDate(), URL, role, builder.compact());
         ObjectMapper mapper = new ObjectMapper();
         try {
             jedis.set(tokenId, mapper.writeValueAsString(token));
@@ -103,6 +103,7 @@ public class TokenServiceImpl
         ObjectMapper mapper = new ObjectMapper();
         JSONParser parser = new JSONParser();
         JSONObject object = (JSONObject) parser.parse(mapper.writeValueAsString(accessToken));
+        object.put("objectName", "token");
         return object;
     }
 

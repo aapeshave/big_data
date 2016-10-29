@@ -16,9 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 
 /**
  * Created by ajinkya on 10/17/16.
@@ -81,9 +86,8 @@ public class UserController {
     }
 
     @RequestMapping(value = "/user/{userUid}", method = RequestMethod.PATCH)
-    public
     @ResponseBody
-    String patchUser(@PathVariable("userUid") String userUid,
+    public String patchUser(@PathVariable("userUid") String userUid,
                      @RequestHeader String token,
                      @RequestParam String parameterName,
                      @RequestBody String parameterValue,
@@ -126,16 +130,52 @@ public class UserController {
     @POST
     @RequestMapping("/v1/user")
     @ResponseBody
-    public String newAddUser(@RequestBody String body, HttpServletResponse response)
-    {
+    public String newAddUser(@RequestBody String body, HttpServletResponse response) throws IOException {
         try {
             JSONObject bodyObject = (JSONObject) new JSONParser().parse(body);
             String result = userService.newAddUser(bodyObject);
+
+            calculateAndAddETag(response, result);
+
             return result;
         } catch (ParseException e) {
+            response.sendError(500, "Internal Server Error. Parsing Failed");
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private void calculateAndAddETag(HttpServletResponse response, String result) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+        byte[] bytesOfMessage = result.getBytes("UTF-8");
+        byte[] thedigest = messageDigest.digest(bytesOfMessage);
+        String eTag = thedigest.toString();
+        response.addHeader("eTag", eTag);
+    }
+
+    @RequestMapping(value = "/v1/user/{userUid}", method = RequestMethod.GET)
+    @ResponseBody
+    public String newGetUser(@PathVariable("userUid") String userUid,
+                             @RequestHeader(required = true) String token,
+                             HttpServletRequest request,
+                            HttpServletResponse response) throws IOException, NoSuchAlgorithmException {
+        String eTag = request.getHeader("If-None-Match");
+        if (isTokenValidated(token, response, userUid)) {
+            JSONObject result = userService.newGetUser(userUid);
+            if (eTag != null){
+                MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+                byte[] bytesOfMessage = result.toJSONString().getBytes("UTF-8");
+                byte[] thedigest = messageDigest.digest(bytesOfMessage);
+                String newETag = thedigest.toString();
+                if (eTag.equals(newETag))
+                {
+                    response.sendError(304, "Object is not modified");
+                }
+            }
+            return result.toJSONString();
+        }
+        throw new BadRequestException("Authentication Failed");
     }
 
 }

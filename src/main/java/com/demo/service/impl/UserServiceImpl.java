@@ -63,7 +63,7 @@ public class UserServiceImpl
             tokens = new JSONArray();
         }
         assert tokens != null;
-        tokens.add(token);
+        tokens.add(token.get("tokenId"));
         if (responseObject != null)
         {
             responseObject.put("Authorization", token.get("tokenUid"));

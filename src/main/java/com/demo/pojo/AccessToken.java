@@ -14,6 +14,7 @@ public class AccessToken
     private String accessUrl;
     private String role;
     private String tokenUid;
+    private String objectName;
 
     public AccessToken(String tokenId, String issuer, Date validTill, String accessUrl, String role, String tokenUid) {
         this.tokenId = tokenId;
@@ -23,6 +24,7 @@ public class AccessToken
         this.accessUrl = accessUrl;
         this.role = role;
         this.tokenUid = tokenUid;
+        this.objectName = "token";
     }
 
     public String getTokenId() {
@@ -91,6 +93,7 @@ public class AccessToken
                 ", createdOn=" + createdOn +
                 ", issuer='" + issuer + '\'' +
                 ", tokenId='" + tokenId + '\'' +
+                ", objectName='" + objectName + '\'' +
                 '}';
     }
 }
