@@ -16,9 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Created by ajinkya on 10/17/16.
@@ -81,13 +86,12 @@ public class UserController {
     }
 
     @RequestMapping(value = "/user/{userUid}", method = RequestMethod.PATCH)
-    public
     @ResponseBody
-    String patchUser(@PathVariable("userUid") String userUid,
-                     @RequestHeader String token,
-                     @RequestParam String parameterName,
-                     @RequestBody String parameterValue,
-                     HttpServletResponse response) throws IOException {
+    public String patchUser(@PathVariable("userUid") String userUid,
+                            @RequestHeader String token,
+                            @RequestParam String parameterName,
+                            @RequestBody String parameterValue,
+                            HttpServletResponse response) throws IOException {
         if (isTokenValidated(token, response, userUid)) {
             if (schemaService.validateFieldInSchema("SCHEMA__User", parameterName)) {
                 try {
@@ -121,6 +125,57 @@ public class UserController {
             throw new NotAuthorizedException("Token is not missing");
         }
         return Boolean.FALSE;
+    }
+
+    @POST
+    @RequestMapping("/v1/user")
+    @ResponseBody
+    public String newAddUser(@RequestBody String body, HttpServletResponse response) throws IOException {
+        try {
+            JSONObject bodyObject = (JSONObject) new JSONParser().parse(body);
+            String result = userService.newAddUser(bodyObject);
+
+            result = calculateAndAddETag(response,result);
+            return result;
+        } catch (ParseException e) {
+            response.sendError(500, "Internal Server Error. Parsing Failed");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private String calculateAndAddETag(HttpServletResponse response, String result) throws NoSuchAlgorithmException,
+            UnsupportedEncodingException,
+            ParseException {
+        JSONObject userObj = (JSONObject) new JSONParser().parse(result);
+        String eTag = (String) userObj.get("eTag");
+        if (eTag != null) {
+            response.addHeader("eTag", eTag);
+            userObj.remove("eTag");
+        }
+        return userObj.toJSONString();
+    }
+
+    @RequestMapping(value = "/v1/user/{userUid}", method = RequestMethod.GET)
+    @ResponseBody
+    public String newGetUser(@PathVariable("userUid") String userUid,
+                             @RequestHeader(required = true) String token,
+                             HttpServletRequest request,
+                             HttpServletResponse response) throws IOException, NoSuchAlgorithmException {
+        String eTag = request.getHeader("If-None-Match");
+        if (isTokenValidated(token, response, userUid)) {
+            JSONObject result = userService.newGetUser(userUid);
+            if (eTag != null) {
+
+                String newETag = (String) result.get("eTag");
+                if (eTag.equals(newETag)) {
+                    response.sendError(304, "Object is not modified");
+                }
+            }
+            return result.toJSONString();
+        }
+        throw new BadRequestException("Authentication Failed");
     }
 
 }

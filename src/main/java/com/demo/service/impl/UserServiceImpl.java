@@ -7,14 +7,22 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.InternalServerErrorException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by ajinkya on 10/17/16.
@@ -40,15 +48,7 @@ public class UserServiceImpl
         processKeys(userObject, jedis, personObject);
         userObject.put("person", personObject);
 
-        JSONObject token = tokenService.createAccessToken((String) userObject.get("userUid"), (String) userObject.get("role"), "ACCESS_TOKEN");
-
-        JSONArray tokens = (JSONArray) userObject.get("tokens");
-        if (tokens == null) {
-            tokens = new JSONArray();
-        }
-        assert tokens != null;
-        tokens.add(token);
-        userObject.put("tokens", tokens);
+        JSONObject token = processAndAddToken(userObject, "tokens", (String) userObject.get("role"), (String) userObject.get("userUid"), null);
 
         jedis.set((String) userObject.get("userUid"), userObject.toJSONString());
         jedis.close();
@@ -60,6 +60,23 @@ public class UserServiceImpl
 
         return response.toJSONString();
     }
+
+	private JSONObject processAndAddToken(JSONObject userObject, String tokenName, String role, String uid, JSONObject responseObject) throws JsonProcessingException, ParseException {
+		JSONObject token = tokenService.createAccessToken(uid, role, "ACCESS_TOKEN");
+
+        JSONArray tokens = (JSONArray) userObject.get(tokenName);
+        if (tokens == null) {
+            tokens = new JSONArray();
+        }
+        assert tokens != null;
+        tokens.add(token.get("tokenId"));
+        if (responseObject != null)
+        {
+            responseObject.put("Authorization", token.get("tokenUid"));
+        }
+        userObject.put("token", tokens);
+		return token;
+	}
 
     @Override
     public String getUser(String userPath) throws ParseException {
@@ -109,6 +126,107 @@ public class UserServiceImpl
     }
 
     @SuppressWarnings("unchecked")
+	@Override
+    public String newAddUser(JSONObject body) {
+        Jedis jedis = new Jedis("localhost");
+        JSONParser parser = new JSONParser();
+        JSONObject responseObject = new JSONObject();
+        try {
+            Map<String, Object> bodyObj = (HashMap<String, Object>) body;
+            JSONObject userObject = new JSONObject();
+
+            String objectType = null;
+            String uid = null;
+            String role = null;
+            // Create initial data for personObject
+            processInitialData(jedis, bodyObj, userObject, responseObject);
+
+            for (String propertyKey : bodyObj.keySet()) {
+                Object property = bodyObj.get(propertyKey);
+                if (property instanceof JSONArray) {
+                    JSONArray propertyArray = (JSONArray) property;
+                    objectType = null;
+                    JSONArray objectKeys = new JSONArray();
+                    for (Object object : propertyArray) {
+                        objectType = (String) ((JSONObject) object).get("objectName");
+                        uid = processAndGetUid(jedis, objectType, (JSONObject) object);
+                        //Add to Jedis
+                        jedis.set(uid, ((JSONObject) object).toJSONString());
+                        // This is done to create link
+                        objectKeys.add(uid);
+                    }
+                    userObject.put(objectType, objectKeys);
+                    responseObject.put(objectType, objectKeys);
+                } else if (property instanceof JSONObject) {
+                    objectType = (String) ((JSONObject) property).get("objectName");
+
+                    if (objectType.equals("role"))
+                    {
+                        role = (String) ((JSONObject)property).get("roleName");
+                    }
+
+                    uid = processAndGetUid(jedis, objectType, (JSONObject) property);
+                    jedis.set(uid, ((JSONObject) property).toJSONString());
+                    // Creating link over here
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("objectType", objectType);
+                    jsonObject.put("objectValue", uid);
+                    userObject.put(objectType, jsonObject);
+                    responseObject.put(objectType, jsonObject);
+                } else {
+                    userObject.put(propertyKey, property);
+                }
+            }
+            // TODO: Insert to jedis over here
+            if (role != null)
+            {
+                processAndAddToken(userObject, "token", role, (String) userObject.get("_uid"), responseObject);
+            }
+            userObject.put("eTag", calculateETag(userObject));
+            responseObject.put("eTag", userObject.get("eTag"));
+            jedis.set((String) responseObject.get(bodyObj.get("objectName")), userObject.toJSONString());
+            return responseObject.toJSONString();
+
+        } catch (ParseException | JsonProcessingException| UnsupportedEncodingException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } finally {
+            jedis.close();
+        }
+        return null;
+    }
+
+    private String calculateETag(JSONObject object) throws NoSuchAlgorithmException,
+            UnsupportedEncodingException,
+            ParseException {
+        MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+        byte[] bytesOfMessage = object.toJSONString().getBytes("UTF-8");
+        byte[] thedigest = messageDigest.digest(bytesOfMessage);
+        return thedigest.toString();
+    }
+
+    private String processAndGetUid(Jedis jedis, String objectType, JSONObject object) {
+        String uid;
+        jedis.incr(objectType);
+        uid = objectType + "__" + jedis.get(objectType);
+        object.put("_uid", uid);
+        object.put("_createdOn", getUnixTimestamp());
+        return uid;
+    }
+
+    private void processInitialData(Jedis jedis,
+                                    Map<String, Object> bodyObj,
+                                    JSONObject userObject,
+                                    JSONObject responseObject) {
+        String objectType = (String) bodyObj.get("objectName");
+        jedis.incr(objectType);
+        String uid = objectType + "__" + jedis.get(objectType);
+        userObject.put("_uid", uid);
+        userObject.put("_createdOn", getUnixTimestamp());
+        responseObject.put(objectType, uid);
+    }
+
+
+    @SuppressWarnings("unchecked")
     private void processKeys(JSONObject userObject, Jedis jedis, JSONObject personObject) {
         String personUid = "person" + "__" + personObject.get("firstName") + "__" + jedis.get(PERSON_COUNT);
         String userUid = "user" + "__" + userObject.get("userName") + "__" + jedis.get(USER_COUNT);
@@ -124,5 +242,51 @@ public class UserServiceImpl
         Long unixDate = new Date().getTime()/1000;
         String unixDateString = unixDate.toString();
         return unixDateString;
+    }
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public JSONObject newGetUser(String pathToObject) {
+		Jedis jedis = new Jedis("localhost");
+        JSONObject response = new JSONObject();
+        JSONParser parser = new JSONParser();
+
+        Assert.assertNotNull(pathToObject);
+        try {
+            JSONObject resultObject = (JSONObject) new JSONParser().parse(jedis.get(pathToObject));
+            if (resultObject != null) {
+                for (Object entryKey : resultObject.keySet()) {
+                    Object entry = resultObject.get(entryKey);
+                    if (entry instanceof JSONObject) {
+                        JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
+                        response.put(((JSONObject) entry).get("objectType"), object);
+                    } else if (entry instanceof JSONArray) {
+                        JSONArray arrayEntries = new JSONArray();
+                        JSONArray entryArray = (JSONArray) entry;
+                        String objectType = null;
+                        for (Object object : entryArray) {
+                            JSONObject arrayEntry = (JSONObject) parser.parse(jedis.get((String) object));
+                            objectType = (String) arrayEntry.get("objectName");
+                            arrayEntries.add(arrayEntry);
+                        }
+                        response.put(objectType, arrayEntries);
+                    } else {
+                        response.put(entryKey, entry);
+                    }
+                }
+                return response;
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+		return null;
+	}
+	
+	
+	private JSONObject getJSONObjectFromObject(Jedis jedis, JSONObject entry, JSONParser parser) throws ParseException {
+        JSONObject object = entry;
+        String objectString = jedis.get((String) object.get("objectValue"));
+        JSONObject objectMap = (JSONObject) parser.parse(objectString);
+        return objectMap;
     }
 }
