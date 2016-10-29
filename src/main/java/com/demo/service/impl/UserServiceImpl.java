@@ -7,12 +7,18 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.InternalServerErrorException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +74,7 @@ public class UserServiceImpl
         {
             responseObject.put("Authorization", token.get("tokenUid"));
         }
-        userObject.put("tokens", tokens);
+        userObject.put("token", tokens);
 		return token;
 	}
 
@@ -176,17 +182,26 @@ public class UserServiceImpl
             {
                 processAndAddToken(userObject, "token", role, (String) userObject.get("_uid"), responseObject);
             }
-            jedis.set((String) responseObject.get(bodyObj.get("objectName")), userObject.toString());
+            userObject.put("eTag", calculateETag(userObject));
+            responseObject.put("eTag", userObject.get("eTag"));
+            jedis.set((String) responseObject.get(bodyObj.get("objectName")), userObject.toJSONString());
             return responseObject.toJSONString();
 
-        } catch (ParseException e) {
-            e.printStackTrace();
-        } catch (JsonProcessingException e) {
+        } catch (ParseException | JsonProcessingException| UnsupportedEncodingException | NoSuchAlgorithmException e) {
             e.printStackTrace();
         } finally {
             jedis.close();
         }
         return null;
+    }
+
+    private String calculateETag(JSONObject object) throws NoSuchAlgorithmException,
+            UnsupportedEncodingException,
+            ParseException {
+        MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+        byte[] bytesOfMessage = object.toJSONString().getBytes("UTF-8");
+        byte[] thedigest = messageDigest.digest(bytesOfMessage);
+        return thedigest.toString();
     }
 
     private String processAndGetUid(Jedis jedis, String objectType, JSONObject object) {
@@ -235,6 +250,8 @@ public class UserServiceImpl
 		Jedis jedis = new Jedis("localhost");
         JSONObject response = new JSONObject();
         JSONParser parser = new JSONParser();
+
+        Assert.assertNotNull(pathToObject);
         try {
             JSONObject resultObject = (JSONObject) new JSONParser().parse(jedis.get(pathToObject));
             if (resultObject != null) {
