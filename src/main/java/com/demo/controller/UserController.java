@@ -148,13 +148,13 @@ public class UserController {
     private String calculateAndAddETag(HttpServletResponse response, String result) throws NoSuchAlgorithmException,
             UnsupportedEncodingException,
             ParseException {
-        JSONObject userObj = (JSONObject) new JSONParser().parse(result);
-        String eTag = (String) userObj.get("eTag");
+        JSONObject responseObject = (JSONObject) new JSONParser().parse(result);
+        String eTag = (String) responseObject.get("eTag");
         if (eTag != null) {
             response.addHeader("eTag", eTag);
-            userObj.remove("eTag");
+            responseObject.remove("eTag");
         }
-        return userObj.toJSONString();
+        return responseObject.toJSONString();
     }
 
     @RequestMapping(value = "/v1/user/{userUid}", method = RequestMethod.GET)
