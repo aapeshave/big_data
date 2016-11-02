@@ -6,10 +6,8 @@ import com.demo.service.TokenService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.SignatureException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -18,7 +16,7 @@ import redis.clients.jedis.Jedis;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
-import java.security.*;
+import java.security.Key;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -90,9 +88,11 @@ public class TokenServiceImpl
         ObjectMapper mapper = new ObjectMapper();
         try {
             jedis.set(tokenId, mapper.writeValueAsString(token));
-            jedis.close();
         } catch (JsonProcessingException e) {
             throw e;
+        }
+        finally {
+            jedis.close();
         }
         return token;
     }
