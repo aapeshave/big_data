@@ -8,6 +8,8 @@ import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.github.fge.jsonschema.main.JsonValidator;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -22,6 +24,8 @@ import java.util.Map;
 @Service
 public class SchemaServiceImpl implements SchemaService {
 	public static final String SCHEMA_PREFIX = "SCHEMA__";
+
+	private Log log = LogFactory.getLog(SchemaServiceImpl.class);
 
 	@Override
 	public String addSchemaToRedis(String jsonSchema, String objectName) {
@@ -101,6 +105,10 @@ public class SchemaServiceImpl implements SchemaService {
 			if (StringUtils.contains(schema, data)) {
 				return Boolean.TRUE;
 			}
+		}
+		else
+		{
+			log.error("SCHEMA Not Found for " + pathToSchema);
 		}
 		return Boolean.FALSE;
 	}
