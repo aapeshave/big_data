@@ -188,7 +188,7 @@ public class UserController {
             String patchObject = patchKey.split("__", 2)[0];
             if (schemaService.validateFieldInSchema("SCHEMA__" + patchObject, parameterName)) {
                 try {
-                    return parameterValue;
+                    return String.valueOf(userService.newUpdateUser(userUid, parameterName, patchKey, parameterValue));
                 } catch (Exception e) {
                     e.printStackTrace();
                     response.sendError(500, "Our Servers are having problems");

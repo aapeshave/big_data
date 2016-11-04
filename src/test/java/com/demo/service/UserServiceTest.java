@@ -10,6 +10,9 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.SystemEnvironmentPropertySource;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+
 import static org.junit.Assert.*;
 
 /**
@@ -81,16 +84,31 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testNewUpdateUser()
-    {
-        String userUid = "user__36";
+    public void testNewUpdateRoleName() throws ParseException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        String userUid = "user__1";
         String parameterName = "roleName";
-        String parameterKey = "role__36";
+        String parameterKey = "role__1";
         String parameterValue = "READ_ONLY";
-
         Boolean result = userService.newUpdateUser(userUid, parameterName, parameterKey, parameterValue);
         Assert.assertTrue(result);
     }
+
+    @Test
+    public void testNewUpdateRole() throws ParseException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        String parameterValue = "{\n" +
+                "    \"_createdOn\": \"1478272985\",\n" +
+                "    \"roleId\": \"1\",\n" +
+                "    \"roleName\": \"read__only\",\n" +
+                "    \"objectName\": \"role\",\n" +
+                "    \"_uid\": \"role__1\"\n" +
+                "  }";
+        String userUid = "user__1";
+        String parameterName = "role";
+        String parameterKey = "role__1";
+        Boolean result = userService.newUpdateUser(userUid, parameterName, parameterKey, parameterValue);
+        Assert.assertTrue(result);
+    }
+
 
     private JSONObject getSampleUserObject(String userBody) throws ParseException {
         JSONParser parser = new JSONParser();

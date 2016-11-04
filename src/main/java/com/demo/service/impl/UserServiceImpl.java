@@ -18,18 +18,13 @@ import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-/**
- * Created by ajinkya on 10/17/16.
- */
 @Service
 @Configurable("jedisConfiguration")
 public class UserServiceImpl
@@ -116,7 +111,7 @@ public class UserServiceImpl
                     parameterObject.put("modifiedOn", getUnixTimestamp());
                     user.put(parameterName, parameterObject);
                 } else if (object instanceof String) {
-                    user.put(parameterName, parameterValue.toString());
+                    user.put(parameterName, parameterValue);
                 }
                 Long del = jedis.del(userPath);
                 if (del == 1) {
@@ -140,14 +135,13 @@ public class UserServiceImpl
     @Override
     public String newAddUser(JSONObject body) {
         Jedis jedis = new Jedis("localhost");
-        JSONParser parser = new JSONParser();
         JSONObject responseObject = new JSONObject();
         try {
             Map<String, Object> bodyObj = (HashMap<String, Object>) body;
             JSONObject userObject = new JSONObject();
 
-            String objectType = null;
-            String uid = null;
+            String objectType;
+            String uid;
             String role = null;
             // Create initial data for personObject
             processInitialData(jedis, bodyObj, userObject, responseObject);
@@ -213,6 +207,7 @@ public class UserServiceImpl
         return thedigest.toString();
     }
 
+    @SuppressWarnings("unchecked")
     private String processAndGetUid(Jedis jedis, String objectType, JSONObject object) {
         String uid;
         jedis.incr(objectType);
@@ -222,6 +217,7 @@ public class UserServiceImpl
         return uid;
     }
 
+    @SuppressWarnings("unchecked")
     private void processInitialData(Jedis jedis,
                                     Map<String, Object> bodyObj,
                                     JSONObject userObject,
@@ -247,11 +243,6 @@ public class UserServiceImpl
         personObject.put("createdOn", getUnixTimestamp());
     }
 
-    private String getUnixTimestamp() {
-        Long unixDate = new Date().getTime() / 1000;
-        String unixDateString = unixDate.toString();
-        return unixDateString;
-    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -296,26 +287,94 @@ public class UserServiceImpl
     public Boolean newUpdateUser(String userUid,
                                  String parameterName,
                                  String parameterKey,
-                                 String parameterValue) throws ResourceNotFoundException{
+                                 String parameterValue) throws ResourceNotFoundException, ParseException, UnsupportedEncodingException, NoSuchAlgorithmException {
         Validate.notEmpty(userUid, "User id can not blank");
         JSONObject userMetaData = getObjectMetaData(userUid);
         if (userMetaData != null)
         {
             log.info("Requested Found metadata: " + userMetaData.toJSONString());
-            if (userMetaData.containsValue(parameterKey))
+            if (isKeyMatched(userUid.split("__")[1], parameterKey.split("__")[1]))
             {
-                JSONObject toChangeObject = newGetUser(parameterKey);
-                log.info("requested Object to Change" + toChangeObject.toJSONString());
-            }
-            else
-            {
-                log.error("Required parameterKey is not present in database. Requested key: "+ parameterKey);
-            }
+                JSONObject parentObjectToBeChanged = newGetUser(parameterKey);
+                Validate.notNull(parentObjectToBeChanged);
+                if (parentObjectToBeChanged.containsKey(parameterName))
+                {
+                    Object objectToBeChanged = parentObjectToBeChanged.get(parameterName);
+                    if (objectToBeChanged instanceof String)
+                    {
+                        Jedis jedis = new Jedis("localhost");
+                        if (!parentObjectToBeChanged.get("_uid").equals(userMetaData.get("_uid")))
+                        {
+                            parentObjectToBeChanged.remove(parameterName);
+                            parentObjectToBeChanged.put(parameterName, parameterValue);
+                            parentObjectToBeChanged.put("_modifiedOn", getUnixTimestamp());
+                            parentObjectToBeChanged.put("eTag", calculateETag(parentObjectToBeChanged));
+                            jedis.set((String) parentObjectToBeChanged.get("_uid"), parentObjectToBeChanged.toJSONString());
+                            userMetaData.put("eTag", calculateETag(userMetaData));
+                            jedis.set(userUid, userMetaData.toJSONString());
+                        }
+                        else
+                        {
+                            userMetaData.remove(parameterName);
+                            userMetaData.put(parameterName, parameterValue);
+                            userMetaData.put("_modifiedOn", getUnixTimestamp());
+                            userMetaData.put("eTag", calculateETag(userMetaData));
+                            jedis.set(userUid, userMetaData.toJSONString());
+                        }
 
+                        jedis.close();
+                        return Boolean.TRUE;
+                    }
+                    if (objectToBeChanged instanceof JSONObject)
+                    {
+                        log.info("Need to replace object");
+                    }
+                }
+                else {
+                    JSONObject requestObject = (JSONObject) new JSONParser().parse(parameterValue);
+                    JSONObject objectToBeChanged  = newGetUser(parameterKey);
+                    Assert.assertNotNull(requestObject);
+                    Assert.assertNotNull(objectToBeChanged);
+                    if (requestObject.get("objectName").equals(objectToBeChanged.get("objectName")))
+                    {
+                        Jedis jedis = new Jedis("localhost");
+                        String createdOn =(String) objectToBeChanged.get("_createdOn");
+                        String uid = (String) objectToBeChanged.get("_uid");
+                        requestObject.put("_uid", uid);
+                        requestObject.put("_createdOn", createdOn);
+                        requestObject.put("_modifiedOn", getUnixTimestamp());
+                        requestObject.put("eTag", calculateETag(requestObject));
+                        userMetaData.put("eTag", calculateETag(userMetaData));
+                        jedis.set(userUid, userMetaData.toJSONString());
+                        jedis.set(uid, requestObject.toJSONString());
+                        return Boolean.TRUE;
+                    }
+                    else
+                    {
+                        log.error("Can not change object. Internal Server Error");
+                    }
+                }
+            }
+            else {
+                throw new BadRequestException("Can not modify objects from other entity");
+            }
         }
 
 
         return Boolean.FALSE;
+    }
+
+    private Boolean isKeyMatched(String s, String s1) {
+        String userKey = s;
+        String patchkey = s1;
+        if (StringUtils.equals(userKey, patchkey))
+        {
+            return Boolean.TRUE;
+        }
+        else
+        {
+            return Boolean.FALSE;
+        }
     }
 
     private JSONObject getObjectMetaData(String userUid) {
@@ -334,6 +393,9 @@ public class UserServiceImpl
         } catch (ParseException e) {
             log.error("Failed while Parsing. Exception: " + e);
         }
+        finally {
+            jedis.close();
+        }
         return null;
     }
 
@@ -343,5 +405,11 @@ public class UserServiceImpl
         String objectString = jedis.get((String) object.get("objectValue"));
         JSONObject objectMap = (JSONObject) parser.parse(objectString);
         return objectMap;
+    }
+
+    private String getUnixTimestamp() {
+        Long unixDate = new Date().getTime() / 1000;
+        String unixDateString = unixDate.toString();
+        return unixDateString;
     }
 }
