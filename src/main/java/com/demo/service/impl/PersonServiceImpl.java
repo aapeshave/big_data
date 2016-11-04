@@ -6,7 +6,6 @@ import com.demo.pojo.User;
 import com.demo.service.PersonService;
 import com.demo.service.TokenService;
 import com.demo.service.UserService;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONArray;
@@ -28,10 +27,6 @@ public class PersonServiceImpl
     private String PERSON_COUNT = "PERSON_COUNT";
 
     private String USER_COUNT = "USER_COUNT";
-
-    private String EMAIL_COUNT = "EMAIL_COUNT";
-
-    private String ADDRESS_COUNT = "ADDRESS_COUNT";
 
     @Autowired
     TokenService tokenService;
@@ -120,16 +115,14 @@ public class PersonServiceImpl
                     JSONObject jsonObject = new JSONObject();
                     objectType = (String) ((JSONObject) property).get("objectName");
                     jsonObject.put("objectType", objectType);
-                    if (objectType.equals("user"))
-                    {
+                    if (objectType.equals("user")) {
                         String userString = userService.newAddUser((JSONObject) property);
                         JSONObject userObject = (JSONObject) parser.parse(userString);
                         jsonObject.put("objectValue", userObject.get("user"));
                         responseObject.put("Authorization", userObject.get("Authorization"));
                         responseObject.put(objectType, userObject.get("user"));
                         personObject.put(objectType, jsonObject);
-                    }
-                    else {
+                    } else {
                         jedis.incr(objectType);
                         uid = objectType + "__" + jedis.get(objectType);
                         ((JSONObject) property).put("_createdOn", getUnixTimestamp());
@@ -142,9 +135,7 @@ public class PersonServiceImpl
                         personObject.put(objectType, jsonObject);
                         responseObject.put(objectType, jsonObject);
                     }
-                }
-                else
-                {
+                } else {
                     personObject.put(propertyKey, property);
                 }
             }
@@ -162,7 +153,7 @@ public class PersonServiceImpl
     }
 
     @SuppressWarnings("unchecked")
-	@Override
+    @Override
     public String v1GetPerson(String personUid) {
         Jedis jedis = new Jedis("localhost");
         JSONObject response = new JSONObject();

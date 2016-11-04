@@ -23,7 +23,10 @@ import javax.ws.rs.InternalServerErrorException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Configurable("jedisConfiguration")
@@ -290,21 +293,16 @@ public class UserServiceImpl
                                  String parameterValue) throws ResourceNotFoundException, ParseException, UnsupportedEncodingException, NoSuchAlgorithmException {
         Validate.notEmpty(userUid, "User id can not blank");
         JSONObject userMetaData = getObjectMetaData(userUid);
-        if (userMetaData != null)
-        {
+        if (userMetaData != null) {
             log.info("Requested Found metadata: " + userMetaData.toJSONString());
-            if (isKeyMatched(userUid.split("__")[1], parameterKey.split("__")[1]))
-            {
+            if (isKeyMatched(userUid.split("__")[1], parameterKey.split("__")[1])) {
                 JSONObject parentObjectToBeChanged = newGetUser(parameterKey);
                 Validate.notNull(parentObjectToBeChanged);
-                if (parentObjectToBeChanged.containsKey(parameterName))
-                {
+                if (parentObjectToBeChanged.containsKey(parameterName)) {
                     Object objectToBeChanged = parentObjectToBeChanged.get(parameterName);
-                    if (objectToBeChanged instanceof String)
-                    {
+                    if (objectToBeChanged instanceof String) {
                         Jedis jedis = new Jedis("localhost");
-                        if (!parentObjectToBeChanged.get("_uid").equals(userMetaData.get("_uid")))
-                        {
+                        if (!parentObjectToBeChanged.get("_uid").equals(userMetaData.get("_uid"))) {
                             parentObjectToBeChanged.remove(parameterName);
                             parentObjectToBeChanged.put(parameterName, parameterValue);
                             parentObjectToBeChanged.put("_modifiedOn", getUnixTimestamp());
@@ -312,9 +310,7 @@ public class UserServiceImpl
                             jedis.set((String) parentObjectToBeChanged.get("_uid"), parentObjectToBeChanged.toJSONString());
                             userMetaData.put("eTag", calculateETag(userMetaData));
                             jedis.set(userUid, userMetaData.toJSONString());
-                        }
-                        else
-                        {
+                        } else {
                             userMetaData.remove(parameterName);
                             userMetaData.put(parameterName, parameterValue);
                             userMetaData.put("_modifiedOn", getUnixTimestamp());
@@ -325,20 +321,17 @@ public class UserServiceImpl
                         jedis.close();
                         return Boolean.TRUE;
                     }
-                    if (objectToBeChanged instanceof JSONObject)
-                    {
+                    if (objectToBeChanged instanceof JSONObject) {
                         log.info("Need to replace object");
                     }
-                }
-                else {
+                } else {
                     JSONObject requestObject = (JSONObject) new JSONParser().parse(parameterValue);
-                    JSONObject objectToBeChanged  = newGetUser(parameterKey);
+                    JSONObject objectToBeChanged = newGetUser(parameterKey);
                     Assert.assertNotNull(requestObject);
                     Assert.assertNotNull(objectToBeChanged);
-                    if (requestObject.get("objectName").equals(objectToBeChanged.get("objectName")))
-                    {
+                    if (requestObject.get("objectName").equals(objectToBeChanged.get("objectName"))) {
                         Jedis jedis = new Jedis("localhost");
-                        String createdOn =(String) objectToBeChanged.get("_createdOn");
+                        String createdOn = (String) objectToBeChanged.get("_createdOn");
                         String uid = (String) objectToBeChanged.get("_uid");
                         requestObject.put("_uid", uid);
                         requestObject.put("_createdOn", createdOn);
@@ -348,14 +341,11 @@ public class UserServiceImpl
                         jedis.set(userUid, userMetaData.toJSONString());
                         jedis.set(uid, requestObject.toJSONString());
                         return Boolean.TRUE;
-                    }
-                    else
-                    {
+                    } else {
                         log.error("Can not change object. Internal Server Error");
                     }
                 }
-            }
-            else {
+            } else {
                 throw new BadRequestException("Can not modify objects from other entity");
             }
         }
@@ -367,12 +357,9 @@ public class UserServiceImpl
     private Boolean isKeyMatched(String s, String s1) {
         String userKey = s;
         String patchkey = s1;
-        if (StringUtils.equals(userKey, patchkey))
-        {
+        if (StringUtils.equals(userKey, patchkey)) {
             return Boolean.TRUE;
-        }
-        else
-        {
+        } else {
             return Boolean.FALSE;
         }
     }
@@ -381,19 +368,15 @@ public class UserServiceImpl
         Jedis jedis = new Jedis("localhost");
         try {
             String userMetaDataString = jedis.get(userUid);
-            if (!StringUtils.isBlank(userMetaDataString))
-            {
+            if (!StringUtils.isBlank(userMetaDataString)) {
                 JSONObject userMetaData = (JSONObject) new JSONParser().parse(userMetaDataString);
                 return userMetaData;
-            }
-            else
-            {
+            } else {
                 throw new ResourceNotFoundException("User Not Found in Database. Requested Resource: " + userUid);
             }
         } catch (ParseException e) {
             log.error("Failed while Parsing. Exception: " + e);
-        }
-        finally {
+        } finally {
             jedis.close();
         }
         return null;
