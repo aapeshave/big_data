@@ -82,16 +82,13 @@ public class TokenServiceImpl
                 .signWith(signatureAlgorithm, signingKey);
 
         builder.setExpiration(getNextYearDate());
-
-        String tokenId = "token" + "__" + jedis.get(TOKEN_COUNT);
+        String key = userUid.split("__", 2)[1];
+        String tokenId = "token" + "__" + key;
         AccessToken token = new AccessToken(tokenId, ISSUER, getNextYearDate(), URL, role, builder.compact());
         ObjectMapper mapper = new ObjectMapper();
         try {
             jedis.set(tokenId, mapper.writeValueAsString(token));
-        } catch (JsonProcessingException e) {
-            throw e;
-        }
-        finally {
+        } finally {
             jedis.close();
         }
         return token;

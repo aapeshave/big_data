@@ -4,6 +4,7 @@ import com.demo.service.impl.UserServiceImpl;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +78,18 @@ public class UserServiceTest {
         String userKey = (String) responseObject.get("user");
         responseObject = userService.newGetUser(userKey);
         System.out.println(responseObject.toJSONString());
+    }
+
+    @Test
+    public void testNewUpdateUser()
+    {
+        String userUid = "user__36";
+        String parameterName = "roleName";
+        String parameterKey = "role__36";
+        String parameterValue = "READ_ONLY";
+
+        Boolean result = userService.newUpdateUser(userUid, parameterName, parameterKey, parameterValue);
+        Assert.assertTrue(result);
     }
 
     private JSONObject getSampleUserObject(String userBody) throws ParseException {

@@ -47,4 +47,13 @@ public interface UserService {
      */
     JSONObject newGetUser(String pathToObject);
 
+    /**
+     *
+     * @param userUid
+     * @param parameterName
+     * @param parameterKey
+     * @param parameterValue
+     * @return
+     */
+    Boolean newUpdateUser(String userUid, String parameterName, String parameterKey, String parameterValue);
 }
