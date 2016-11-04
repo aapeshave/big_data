@@ -3,6 +3,11 @@ package com.demo.service.impl;
 import com.demo.service.TokenService;
 import com.demo.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.elasticsearch.ResourceNotFoundException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -13,8 +18,7 @@ import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -24,17 +28,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by ajinkya on 10/17/16.
- */
 @Service
 @Configurable("jedisConfiguration")
 public class UserServiceImpl
         implements UserService {
     @Autowired
     TokenService tokenService;
+
     private String PERSON_COUNT = "PERSON_COUNT";
     private String USER_COUNT = "USER_COUNT";
+
+    private Log log = LogFactory.getLog(UserServiceImpl.class);
 
     @Override
     public String addUser(JSONObject userObject) throws JsonProcessingException, ParseException {
@@ -48,7 +52,8 @@ public class UserServiceImpl
         processKeys(userObject, jedis, personObject);
         userObject.put("person", personObject);
 
-        JSONObject token = processAndAddToken(userObject, "tokens", (String) userObject.get("role"), (String) userObject.get("userUid"), null);
+        JSONObject token = processAndAddToken(userObject, "tokens", (String) userObject.get("role"),
+                (String) userObject.get("userUid"), null);
 
         jedis.set((String) userObject.get("userUid"), userObject.toJSONString());
         jedis.close();
@@ -61,8 +66,13 @@ public class UserServiceImpl
         return response.toJSONString();
     }
 
-	private JSONObject processAndAddToken(JSONObject userObject, String tokenName, String role, String uid, JSONObject responseObject) throws JsonProcessingException, ParseException {
-		JSONObject token = tokenService.createAccessToken(uid, role, "ACCESS_TOKEN");
+    private JSONObject processAndAddToken(JSONObject userObject,
+                                          String tokenName,
+                                          String role,
+                                          String uid,
+                                          JSONObject responseObject)
+            throws JsonProcessingException, ParseException {
+        JSONObject token = tokenService.createAccessToken(uid, role, "ACCESS_TOKEN");
 
         JSONArray tokens = (JSONArray) userObject.get(tokenName);
         if (tokens == null) {
@@ -70,13 +80,12 @@ public class UserServiceImpl
         }
         assert tokens != null;
         tokens.add(token.get("tokenId"));
-        if (responseObject != null)
-        {
+        if (responseObject != null) {
             responseObject.put("Authorization", token.get("tokenUid"));
         }
         userObject.put("token", tokens);
-		return token;
-	}
+        return token;
+    }
 
     @Override
     public String getUser(String userPath) throws ParseException {
@@ -105,7 +114,7 @@ public class UserServiceImpl
                     parameterObject.put("modifiedOn", getUnixTimestamp());
                     user.put(parameterName, parameterObject);
                 } else if (object instanceof String) {
-                    user.put(parameterName, parameterValue.toString());
+                    user.put(parameterName, parameterValue);
                 }
                 Long del = jedis.del(userPath);
                 if (del == 1) {
@@ -126,17 +135,16 @@ public class UserServiceImpl
     }
 
     @SuppressWarnings("unchecked")
-	@Override
+    @Override
     public String newAddUser(JSONObject body) {
         Jedis jedis = new Jedis("localhost");
-        JSONParser parser = new JSONParser();
         JSONObject responseObject = new JSONObject();
         try {
             Map<String, Object> bodyObj = (HashMap<String, Object>) body;
             JSONObject userObject = new JSONObject();
 
-            String objectType = null;
-            String uid = null;
+            String objectType;
+            String uid;
             String role = null;
             // Create initial data for personObject
             processInitialData(jedis, bodyObj, userObject, responseObject);
@@ -160,9 +168,8 @@ public class UserServiceImpl
                 } else if (property instanceof JSONObject) {
                     objectType = (String) ((JSONObject) property).get("objectName");
 
-                    if (objectType.equals("role"))
-                    {
-                        role = (String) ((JSONObject)property).get("roleName");
+                    if (objectType.equals("role")) {
+                        role = (String) ((JSONObject) property).get("roleName");
                     }
 
                     uid = processAndGetUid(jedis, objectType, (JSONObject) property);
@@ -177,9 +184,8 @@ public class UserServiceImpl
                     userObject.put(propertyKey, property);
                 }
             }
-            // TODO: Insert to jedis over here
-            if (role != null)
-            {
+
+            if (role != null) {
                 processAndAddToken(userObject, "token", role, (String) userObject.get("_uid"), responseObject);
             }
             userObject.put("eTag", calculateETag(userObject));
@@ -187,7 +193,7 @@ public class UserServiceImpl
             jedis.set((String) responseObject.get(bodyObj.get("objectName")), userObject.toJSONString());
             return responseObject.toJSONString();
 
-        } catch (ParseException | JsonProcessingException| UnsupportedEncodingException | NoSuchAlgorithmException e) {
+        } catch (ParseException | UnsupportedEncodingException | NoSuchAlgorithmException | JsonProcessingException e) {
             e.printStackTrace();
         } finally {
             jedis.close();
@@ -204,6 +210,7 @@ public class UserServiceImpl
         return thedigest.toString();
     }
 
+    @SuppressWarnings("unchecked")
     private String processAndGetUid(Jedis jedis, String objectType, JSONObject object) {
         String uid;
         jedis.incr(objectType);
@@ -213,6 +220,7 @@ public class UserServiceImpl
         return uid;
     }
 
+    @SuppressWarnings("unchecked")
     private void processInitialData(Jedis jedis,
                                     Map<String, Object> bodyObj,
                                     JSONObject userObject,
@@ -238,16 +246,11 @@ public class UserServiceImpl
         personObject.put("createdOn", getUnixTimestamp());
     }
 
-    private String getUnixTimestamp() {
-        Long unixDate = new Date().getTime()/1000;
-        String unixDateString = unixDate.toString();
-        return unixDateString;
-    }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public JSONObject newGetUser(String pathToObject) {
-		Jedis jedis = new Jedis("localhost");
+    @SuppressWarnings("unchecked")
+    @Override
+    public JSONObject newGetUser(String pathToObject) {
+        Jedis jedis = new Jedis("localhost");
         JSONObject response = new JSONObject();
         JSONParser parser = new JSONParser();
 
@@ -258,8 +261,9 @@ public class UserServiceImpl
                 for (Object entryKey : resultObject.keySet()) {
                     Object entry = resultObject.get(entryKey);
                     if (entry instanceof JSONObject) {
+                        String objectType = (String) ((JSONObject) entry).get("objectType");
                         JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
-                        response.put(((JSONObject) entry).get("objectType"), object);
+                        response.put(objectType, object);
                     } else if (entry instanceof JSONArray) {
                         JSONArray arrayEntries = new JSONArray();
                         JSONArray entryArray = (JSONArray) entry;
@@ -279,14 +283,116 @@ public class UserServiceImpl
         } catch (ParseException e) {
             e.printStackTrace();
         }
-		return null;
-	}
-	
-	
-	private JSONObject getJSONObjectFromObject(Jedis jedis, JSONObject entry, JSONParser parser) throws ParseException {
+        return null;
+    }
+
+    @Override
+    public Boolean newUpdateUser(String userUid,
+                                 String parameterName,
+                                 String parameterKey,
+                                 String parameterValue) throws ResourceNotFoundException, ParseException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        Validate.notEmpty(userUid, "User id can not blank");
+        JSONObject userMetaData = getObjectMetaData(userUid);
+        if (userMetaData != null) {
+            log.info("Requested Found metadata: " + userMetaData.toJSONString());
+            if (isKeyMatched(userUid.split("__")[1], parameterKey.split("__")[1])) {
+                JSONObject parentObjectToBeChanged = newGetUser(parameterKey);
+                Validate.notNull(parentObjectToBeChanged);
+                if (parentObjectToBeChanged.containsKey(parameterName)) {
+                    Object objectToBeChanged = parentObjectToBeChanged.get(parameterName);
+                    if (objectToBeChanged instanceof String) {
+                        Jedis jedis = new Jedis("localhost");
+                        if (!parentObjectToBeChanged.get("_uid").equals(userMetaData.get("_uid"))) {
+                            parentObjectToBeChanged.remove(parameterName);
+                            parentObjectToBeChanged.put(parameterName, parameterValue);
+                            parentObjectToBeChanged.put("_modifiedOn", getUnixTimestamp());
+                            parentObjectToBeChanged.put("eTag", calculateETag(parentObjectToBeChanged));
+                            jedis.set((String) parentObjectToBeChanged.get("_uid"), parentObjectToBeChanged.toJSONString());
+                            userMetaData.put("eTag", calculateETag(userMetaData));
+                            jedis.set(userUid, userMetaData.toJSONString());
+                        } else {
+                            userMetaData.remove(parameterName);
+                            userMetaData.put(parameterName, parameterValue);
+                            userMetaData.put("_modifiedOn", getUnixTimestamp());
+                            userMetaData.put("eTag", calculateETag(userMetaData));
+                            jedis.set(userUid, userMetaData.toJSONString());
+                        }
+
+                        jedis.close();
+                        return Boolean.TRUE;
+                    }
+                    if (objectToBeChanged instanceof JSONObject) {
+                        log.info("Need to replace object");
+                    }
+                } else {
+                    JSONObject requestObject = (JSONObject) new JSONParser().parse(parameterValue);
+                    JSONObject objectToBeChanged = newGetUser(parameterKey);
+                    Assert.assertNotNull(requestObject);
+                    Assert.assertNotNull(objectToBeChanged);
+                    if (requestObject.get("objectName").equals(objectToBeChanged.get("objectName"))) {
+                        Jedis jedis = new Jedis("localhost");
+                        String createdOn = (String) objectToBeChanged.get("_createdOn");
+                        String uid = (String) objectToBeChanged.get("_uid");
+                        requestObject.put("_uid", uid);
+                        requestObject.put("_createdOn", createdOn);
+                        requestObject.put("_modifiedOn", getUnixTimestamp());
+                        requestObject.put("eTag", calculateETag(requestObject));
+                        userMetaData.put("eTag", calculateETag(userMetaData));
+                        jedis.set(userUid, userMetaData.toJSONString());
+                        jedis.set(uid, requestObject.toJSONString());
+                        return Boolean.TRUE;
+                    } else {
+                        log.error("Can not change object. Internal Server Error");
+                    }
+                }
+            } else {
+                throw new BadRequestException("Can not modify objects from other entity");
+            }
+        }
+
+
+        return Boolean.FALSE;
+    }
+
+    private Boolean isKeyMatched(String s, String s1) {
+        String userKey = s;
+        String patchkey = s1;
+        if (StringUtils.equals(userKey, patchkey)) {
+            return Boolean.TRUE;
+        } else {
+            return Boolean.FALSE;
+        }
+    }
+
+    private JSONObject getObjectMetaData(String userUid) {
+        Jedis jedis = new Jedis("localhost");
+        try {
+            String userMetaDataString = jedis.get(userUid);
+            if (!StringUtils.isBlank(userMetaDataString)) {
+                JSONObject userMetaData = (JSONObject) new JSONParser().parse(userMetaDataString);
+                return userMetaData;
+            } else {
+                throw new ResourceNotFoundException("User Not Found in Database. Requested Resource: " + userUid);
+            }
+        } catch (ParseException e) {
+            log.error("Failed while Parsing. Exception: " + e);
+        } finally {
+            jedis.close();
+        }
+        return null;
+    }
+
+
+    private JSONObject getJSONObjectFromObject(Jedis jedis, JSONObject entry, JSONParser parser) throws ParseException {
         JSONObject object = entry;
         String objectString = jedis.get((String) object.get("objectValue"));
         JSONObject objectMap = (JSONObject) parser.parse(objectString);
         return objectMap;
+    }
+
+    private String getUnixTimestamp() {
+        Long unixDate = new Date().getTime() / 1000;
+        String unixDateString = unixDate.toString();
+        return unixDateString;
     }
 }

@@ -4,12 +4,12 @@ import com.demo.service.impl.UserServiceImpl;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.SystemEnvironmentPropertySource;
 
-import static org.junit.Assert.*;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Created by ajinkya on 10/18/16.
@@ -78,6 +78,33 @@ public class UserServiceTest {
         responseObject = userService.newGetUser(userKey);
         System.out.println(responseObject.toJSONString());
     }
+
+    @Test
+    public void testNewUpdateRoleName() throws ParseException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        String userUid = "user__1";
+        String parameterName = "roleName";
+        String parameterKey = "role__1";
+        String parameterValue = "READ_ONLY";
+        Boolean result = userService.newUpdateUser(userUid, parameterName, parameterKey, parameterValue);
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    public void testNewUpdateRole() throws ParseException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        String parameterValue = "{\n" +
+                "    \"_createdOn\": \"1478272985\",\n" +
+                "    \"roleId\": \"1\",\n" +
+                "    \"roleName\": \"read__only\",\n" +
+                "    \"objectName\": \"role\",\n" +
+                "    \"_uid\": \"role__1\"\n" +
+                "  }";
+        String userUid = "user__1";
+        String parameterName = "role";
+        String parameterKey = "role__1";
+        Boolean result = userService.newUpdateUser(userUid, parameterName, parameterKey, parameterValue);
+        Assert.assertTrue(result);
+    }
+
 
     private JSONObject getSampleUserObject(String userBody) throws ParseException {
         JSONParser parser = new JSONParser();

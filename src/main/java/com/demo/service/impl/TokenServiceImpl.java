@@ -6,10 +6,8 @@ import com.demo.service.TokenService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.SignatureException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -18,7 +16,7 @@ import redis.clients.jedis.Jedis;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
-import java.security.*;
+import java.security.Key;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -84,15 +82,14 @@ public class TokenServiceImpl
                 .signWith(signatureAlgorithm, signingKey);
 
         builder.setExpiration(getNextYearDate());
-
-        String tokenId = "token" + "__" + jedis.get(TOKEN_COUNT);
+        String key = userUid.split("__", 2)[1];
+        String tokenId = "token" + "__" + key;
         AccessToken token = new AccessToken(tokenId, ISSUER, getNextYearDate(), URL, role, builder.compact());
         ObjectMapper mapper = new ObjectMapper();
         try {
             jedis.set(tokenId, mapper.writeValueAsString(token));
+        } finally {
             jedis.close();
-        } catch (JsonProcessingException e) {
-            throw e;
         }
         return token;
     }

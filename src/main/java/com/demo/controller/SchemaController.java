@@ -1,23 +1,15 @@
 package com.demo.controller;
 
 import com.demo.service.SchemaService;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.JSONPObject;
 import org.apache.commons.lang3.StringUtils;
-import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import redis.clients.jedis.Jedis;
 
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -45,10 +37,8 @@ public class SchemaController {
 
     @POST
     @RequestMapping("/v1/")
-    public String addSchemaNewVersion(@RequestBody String entity)
-    {
-        if (!StringUtils.isBlank(entity))
-        {
+    public String addSchemaNewVersion(@RequestBody String entity) {
+        if (!StringUtils.isBlank(entity)) {
             return schemaService.addNewSchema(entity);
         }
         return null;
@@ -56,10 +46,8 @@ public class SchemaController {
 
     @GET
     @RequestMapping("/{uuid}")
-    public String getSchema(@PathVariable("uuid") String schemaPath)
-    {
-        if (!StringUtils.isBlank(schemaPath))
-        {
+    public String getSchema(@PathVariable("uuid") String schemaPath) {
+        if (!StringUtils.isBlank(schemaPath)) {
             return schemaService.getSchemaFromRedis(schemaPath);
         }
         return null;
@@ -67,10 +55,8 @@ public class SchemaController {
 
     @DELETE
     @RequestMapping(value = "/{uuid}", method = RequestMethod.DELETE)
-    public boolean deleteSchema(@PathVariable("uuid") String schemaPath)
-    {
-        if (!StringUtils.isBlank(schemaPath))
-        {
+    public boolean deleteSchema(@PathVariable("uuid") String schemaPath) {
+        if (!StringUtils.isBlank(schemaPath)) {
             return schemaService.deleteSchemaFromRedis(schemaPath);
         }
         return Boolean.FALSE;
@@ -78,9 +64,8 @@ public class SchemaController {
 
     // TODO: Implementation is not done
     @RequestMapping(value = "/{uuid}/{propertyName}", method = RequestMethod.PATCH)
-    public String updateSchema(@PathVariable("uuid") String schemaPath, @PathVariable("propertyName") String propertyName, @RequestParam String value)
-    {
-        System.out.println("schemaPAth: "+ schemaPath +"property Name: "+ propertyName);
+    public String updateSchema(@PathVariable("uuid") String schemaPath, @PathVariable("propertyName") String propertyName, @RequestParam String value) {
+        System.out.println("schemaPAth: " + schemaPath + "property Name: " + propertyName);
         return null;
     }
 }

@@ -1,8 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "objectName": "person",
   "type": "object",
+  "objectName": "person",
   "properties": {
+    "objectName": {
+      "type": "string"
+    },
     "firstName": {
       "type": "string"
     },
@@ -10,27 +13,68 @@
       "type": "string"
     },
     "email": {
-      "type": "string"
+      "type": "array",
+      "objectName": "email",
+      "items": {
+        "type": "object",
+        "properties": {
+          "objectName": {
+            "type": "string"
+          },
+          "emailAddress": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "objectName",
+          "emailAddress"
+        ]
+      }
     },
-    "username": {
-      "type": "string"
-    },
-    "password": {
-      "type": "string"
-    },
-    "role": {
-      "type": "string"
-    },
-    "SSN": {
-      "type": "string"
+    "address": {
+      "objectName": "address",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "objectName": {
+            "type": "string"
+          },
+          "street1": {
+            "type": "string"
+          },
+          "street2": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "zipCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "objectName",
+          "street1",
+          "street2",
+          "city",
+          "state",
+          "country",
+          "zipCode"
+        ]
+      }
     }
   },
   "required": [
+    "objectName",
     "firstName",
     "lastName",
-    "email",
-    "username",
-    "password",
-    "role"
+    "email"
   ]
 }

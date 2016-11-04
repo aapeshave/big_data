@@ -5,7 +5,7 @@ import com.demo.pojo.AccessToken;
 import com.demo.pojo.User;
 import com.demo.service.PersonService;
 import com.demo.service.TokenService;
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.demo.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONArray;
@@ -28,12 +28,11 @@ public class PersonServiceImpl
 
     private String USER_COUNT = "USER_COUNT";
 
-    private String EMAIL_COUNT = "EMAIL_COUNT";
-
-    private String ADDRESS_COUNT = "ADDRESS_COUNT";
-
     @Autowired
     TokenService tokenService;
+
+    @Autowired
+    UserService userService;
 
     @Override
     public String processAndAddPerson(String personData) {
@@ -113,19 +112,29 @@ public class PersonServiceImpl
                     personObject.put(objectType, objectKeys);
                     responseObject.put(objectType, objectKeys);
                 } else if (property instanceof JSONObject) {
-                    objectType = (String) ((JSONObject) property).get("objectName");
-                    jedis.incr(objectType);
-                    uid = objectType + "__" + jedis.get(objectType);
-                    ((JSONObject) property).put("_createdOn", getUnixTimestamp());
-                    ((JSONObject) property).put("_uid", uid);
-                    // TODO: Insert to jedis over here
-                    jedis.set(uid, ((JSONObject) property).toJSONString());
-                    // Creating link over here
                     JSONObject jsonObject = new JSONObject();
+                    objectType = (String) ((JSONObject) property).get("objectName");
                     jsonObject.put("objectType", objectType);
-                    jsonObject.put("objectValue", uid);
-                    personObject.put(objectType, jsonObject);
-                    responseObject.put(objectType, jsonObject);
+                    if (objectType.equals("user")) {
+                        String userString = userService.newAddUser((JSONObject) property);
+                        JSONObject userObject = (JSONObject) parser.parse(userString);
+                        jsonObject.put("objectValue", userObject.get("user"));
+                        responseObject.put("Authorization", userObject.get("Authorization"));
+                        responseObject.put(objectType, userObject.get("user"));
+                        personObject.put(objectType, jsonObject);
+                    } else {
+                        jedis.incr(objectType);
+                        uid = objectType + "__" + jedis.get(objectType);
+                        ((JSONObject) property).put("_createdOn", getUnixTimestamp());
+                        ((JSONObject) property).put("_uid", uid);
+                        // TODO: Insert to jedis over here
+                        jedis.set(uid, ((JSONObject) property).toJSONString());
+                        // Creating link over here
+
+                        jsonObject.put("objectValue", uid);
+                        personObject.put(objectType, jsonObject);
+                        responseObject.put(objectType, jsonObject);
+                    }
                 } else {
                     personObject.put(propertyKey, property);
                 }
@@ -144,7 +153,7 @@ public class PersonServiceImpl
     }
 
     @SuppressWarnings("unchecked")
-	@Override
+    @Override
     public String v1GetPerson(String personUid) {
         Jedis jedis = new Jedis("localhost");
         JSONObject response = new JSONObject();
@@ -181,7 +190,7 @@ public class PersonServiceImpl
 
     private JSONObject getJSONObjectFromObject(Jedis jedis, JSONObject entry, JSONParser parser) throws ParseException {
         JSONObject object = entry;
-        String objectString = jedis.get((String) object.get("_uid"));
+        String objectString = jedis.get((String) object.get("objectValue"));
         JSONObject objectMap = (JSONObject) parser.parse(objectString);
         return objectMap;
     }

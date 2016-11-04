@@ -18,11 +18,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
@@ -135,7 +133,7 @@ public class UserController {
             JSONObject bodyObject = (JSONObject) new JSONParser().parse(body);
             String result = userService.newAddUser(bodyObject);
 
-            result = calculateAndAddETag(response,result);
+            result = calculateAndAddETag(response, result);
             return result;
         } catch (ParseException e) {
             response.sendError(500, "Internal Server Error. Parsing Failed");
@@ -178,4 +176,29 @@ public class UserController {
         throw new BadRequestException("Authentication Failed");
     }
 
+    @RequestMapping(value = "/v1/user/{userUid}", method = RequestMethod.PATCH)
+    @ResponseBody
+    public String newPatchUser(@PathVariable("userUid") String userUid,
+                               @RequestHeader String token,
+                               @RequestParam String parameterName,
+                               @RequestBody String parameterValue,
+                               @RequestParam String patchKey,
+                               HttpServletResponse response) throws IOException {
+        if (isTokenValidated(token, response, userUid)) {
+            String patchObject = patchKey.split("__", 2)[0];
+            if (schemaService.validateFieldInSchema("SCHEMA__" + patchObject, parameterName)) {
+                try {
+                    return String.valueOf(userService.newUpdateUser(userUid, parameterName, patchKey, parameterValue));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    response.sendError(500, "Our Servers are having problems");
+                }
+            } else {
+                response.sendError(400, "Bad Request. Parameter doesn't match schema");
+            }
+        } else {
+            response.sendError(401, "Authorization Failed");
+        }
+        return null;
+    }
 }

@@ -5,6 +5,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Service;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+
 /**
  * Created by ajinkya on 10/17/16.
  */
@@ -47,4 +50,13 @@ public interface UserService {
      */
     JSONObject newGetUser(String pathToObject);
 
+    /**
+     *
+     * @param userUid
+     * @param parameterName
+     * @param parameterKey
+     * @param parameterValue
+     * @return
+     */
+    Boolean newUpdateUser(String userUid, String parameterName, String parameterKey, String parameterValue) throws ParseException, UnsupportedEncodingException, NoSuchAlgorithmException;
 }
