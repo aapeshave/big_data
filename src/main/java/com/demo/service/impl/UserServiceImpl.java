@@ -8,7 +8,6 @@ import org.apache.commons.lang.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.ResourceNotFoundException;
-import org.elasticsearch.action.fieldstats.FieldStats;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -258,8 +257,7 @@ public class UserServiceImpl
         Assert.assertNotNull(pathToObject);
         try {
             String res = jedis.get(pathToObject);
-            if (!StringUtils.isBlank(res))
-            {
+            if (!StringUtils.isBlank(res)) {
                 JSONObject resultObject = (JSONObject) new JSONParser().parse(res);
                 if (resultObject != null) {
                     for (Object entryKey : resultObject.keySet()) {
@@ -284,8 +282,7 @@ public class UserServiceImpl
                     }
                     return response;
                 }
-            }
-            else {
+            } else {
                 throw new ResourceNotFoundException("Invalid object key");
             }
         } catch (ParseException e) {
@@ -368,39 +365,29 @@ public class UserServiceImpl
         try {
             JSONObject userMetaData = (JSONObject) new JSONParser().parse(jedis.get(userUid));
             long result = deleteUser(userMetaData, jedis);
-            if (result>0)
-            {
+            if (result > 0) {
                 return Boolean.TRUE;
-            }
-            else
-            {
+            } else {
                 return Boolean.FALSE;
             }
         } catch (ParseException e) {
-            log.error("Failed while parsing. Exception: "+ e);
-        }
-        finally {
+            log.error("Failed while parsing. Exception: " + e);
+        } finally {
             jedis.close();
         }
         return Boolean.FALSE;
     }
 
-    private long deleteUser(JSONObject object, Jedis jedis)
-    {
+    private long deleteUser(JSONObject object, Jedis jedis) {
         long result = 0;
-        if (object != null)
-        {
-            for (Object entryKey : object.keySet())
-            {
+        if (object != null) {
+            for (Object entryKey : object.keySet()) {
                 Object entry = object.get(entryKey);
                 {
-                    if (entry instanceof JSONObject)
-                    {
+                    if (entry instanceof JSONObject) {
                         long res = jedis.del((String) ((JSONObject) entry).get("objectValue"));
                         result = result + res;
-                    }
-                    else if (entry instanceof JSONArray)
-                    {
+                    } else if (entry instanceof JSONArray) {
                         JSONArray entryArray = (JSONArray) entry;
                         for (Object place : entryArray) {
                             long res = jedis.del((String) place);

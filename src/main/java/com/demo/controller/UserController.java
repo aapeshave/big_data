@@ -180,8 +180,7 @@ public class UserController {
             } catch (ResourceNotFoundException e) {
                 response.sendError(404, "Requested Resource Not Found");
             }
-        }
-        else {
+        } else {
             throw new BadRequestException("Authentication Failed");
         }
         return String.valueOf(response);
@@ -222,8 +221,7 @@ public class UserController {
         Validate.notEmpty(userUid, "UserUid can not be empty");
         Validate.notEmpty(token, "Token can not be empty");
         try {
-            if (isTokenValidated(token, response, userUid ))
-            {
+            if (isTokenValidated(token, response, userUid)) {
                 return String.valueOf(userService.deleteUser(userUid));
             }
         } catch (IOException e) {
