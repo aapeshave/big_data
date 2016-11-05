@@ -1,6 +1,7 @@
 package com.demo.service;
 
 
+import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ public interface SchemaService {
      * @param data
      * @return
      */
-    Boolean validateSchema(String pathToSchema, String data) throws IOException;
+    Boolean validateSchema(String pathToSchema, String data) throws IOException, ProcessingException;
 
     /**
      *

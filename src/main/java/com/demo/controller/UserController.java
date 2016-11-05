@@ -3,6 +3,9 @@ package com.demo.controller;
 import com.demo.service.SchemaService;
 import com.demo.service.TokenService;
 import com.demo.service.UserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.fge.jsonschema.core.exceptions.*;
+import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
@@ -57,10 +60,14 @@ public class UserController {
                     return userService.addUser(user);
                 } catch (ParseException e) {
                     throw new BadRequestException("Can not create user");
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
                 }
             }
+        } catch (ProcessingException e) {
+            throw new BadRequestException("Can not validate JSON Schema" + e.toString());
         } catch (IOException e) {
-            throw new BadRequestException("Can not validate JSON Schema");
+            e.printStackTrace();
         }
         return null;
     }
@@ -130,17 +137,28 @@ public class UserController {
     @POST
     @RequestMapping("/v1/user")
     @ResponseBody
-    public String newAddUser(@RequestBody String body, HttpServletResponse response) throws IOException {
+    public String newAddUser(@RequestBody String body, HttpServletResponse response) throws IOException, ProcessingException {
         try {
             JSONObject bodyObject = (JSONObject) new JSONParser().parse(body);
-            String result = userService.newAddUser(bodyObject);
-
-            result = calculateAndAddETag(response, result);
-            return result;
+            Validate.notNull(bodyObject);
+            String pathToSchema = (String) bodyObject.get("objectName");
+            try {
+                if (schemaService.validateSchema("SCHEMA__" + pathToSchema, body))
+                {
+                    String result = userService.newAddUser(bodyObject);
+                    result = calculateAndAddETag(response, result);
+                    return result;
+                }
+                else {
+                    response.sendError(400, "Can not Validate Schema");
+                }
+            } catch (IOException | ParseException | NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (ProcessingException e) {
+                response.sendError(400, "Can not Validate Schema. Message: " + e.toString() );
+            }
         } catch (ParseException e) {
             response.sendError(500, "Internal Server Error. Parsing Failed");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
         }
         return null;
     }

@@ -2,6 +2,7 @@ package com.demo.controller;
 
 import com.demo.service.PersonService;
 import com.demo.service.SchemaService;
+import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,7 +42,7 @@ public class PersonControllerV1 {
                 } else {
                     response.sendError(403, "Schema not validated");
                 }
-            } catch (IOException e) {
+            } catch (IOException | ProcessingException e) {
                 response.sendError(403, "Schema not validated");
             }
         } else {

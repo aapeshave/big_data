@@ -431,7 +431,6 @@ public class UserServiceImpl
         return null;
     }
 
-
     private JSONObject getJSONObjectFromObject(Jedis jedis, JSONObject entry, JSONParser parser) throws ParseException {
         JSONObject object = entry;
         String objectString = jedis.get((String) object.get("objectValue"));

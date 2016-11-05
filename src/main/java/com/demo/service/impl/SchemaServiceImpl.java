@@ -73,7 +73,7 @@ public class SchemaServiceImpl implements SchemaService {
 	}
 
 	@Override
-	public Boolean validateSchema(String pathToSchema, String data) throws IOException {
+	public Boolean validateSchema(String pathToSchema, String data) throws IOException, ProcessingException {
 		String jsonSchema = getSchemaFromRedis(pathToSchema);
 		if (jsonSchema != null && !(jsonSchema.isEmpty())) {
 			final JsonNode d = JsonLoader.fromString(data);
@@ -83,15 +83,11 @@ public class SchemaServiceImpl implements SchemaService {
 			JsonValidator v = factory.getValidator();
 
 			ProcessingReport report = null;
-			try {
-				report = v.validate(s, d);
-			} catch (ProcessingException e) {
-				e.printStackTrace();
-			}
+			report = v.validate(s, d);
 			if (report != null) {
 				if (!report.toString().contains("success")) {
-					throw new BadRequestException(report.toString());
-				} else
+                    throw new ProcessingException(report.toString());
+                } else
 					return Boolean.TRUE;
 			}
 		}
