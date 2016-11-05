@@ -105,6 +105,18 @@ public class UserServiceTest {
         Assert.assertTrue(result);
     }
 
+    @Test
+    public void testDeleteUser() throws ParseException {
+        JSONObject sampleUser = (JSONObject) new JSONParser().parse(SAMPLE_USER_2);
+        String result = userService.newAddUser(sampleUser);
+        Assert.assertNotNull(result);
+
+        JSONObject resultObject = (JSONObject) new JSONParser().parse(result);
+
+        String userUid = (String) resultObject.get("_uid");
+        Boolean resultOfDelete = userService.deleteUser(userUid);
+        Assert.assertTrue(resultOfDelete);
+    }
 
     private JSONObject getSampleUserObject(String userBody) throws ParseException {
         JSONParser parser = new JSONParser();

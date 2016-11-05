@@ -8,6 +8,7 @@ import org.apache.commons.lang.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.ResourceNotFoundException;
+import org.elasticsearch.action.fieldstats.FieldStats;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -249,36 +250,43 @@ public class UserServiceImpl
 
     @SuppressWarnings("unchecked")
     @Override
-    public JSONObject newGetUser(String pathToObject) {
+    public JSONObject newGetUser(String pathToObject) throws ResourceNotFoundException {
         Jedis jedis = new Jedis("localhost");
         JSONObject response = new JSONObject();
         JSONParser parser = new JSONParser();
 
         Assert.assertNotNull(pathToObject);
         try {
-            JSONObject resultObject = (JSONObject) new JSONParser().parse(jedis.get(pathToObject));
-            if (resultObject != null) {
-                for (Object entryKey : resultObject.keySet()) {
-                    Object entry = resultObject.get(entryKey);
-                    if (entry instanceof JSONObject) {
-                        String objectType = (String) ((JSONObject) entry).get("objectType");
-                        JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
-                        response.put(objectType, object);
-                    } else if (entry instanceof JSONArray) {
-                        JSONArray arrayEntries = new JSONArray();
-                        JSONArray entryArray = (JSONArray) entry;
-                        String objectType = null;
-                        for (Object object : entryArray) {
-                            JSONObject arrayEntry = (JSONObject) parser.parse(jedis.get((String) object));
-                            objectType = (String) arrayEntry.get("objectName");
-                            arrayEntries.add(arrayEntry);
+            String res = jedis.get(pathToObject);
+            if (!StringUtils.isBlank(res))
+            {
+                JSONObject resultObject = (JSONObject) new JSONParser().parse(res);
+                if (resultObject != null) {
+                    for (Object entryKey : resultObject.keySet()) {
+                        Object entry = resultObject.get(entryKey);
+                        if (entry instanceof JSONObject) {
+                            String objectType = (String) ((JSONObject) entry).get("objectType");
+                            JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
+                            response.put(objectType, object);
+                        } else if (entry instanceof JSONArray) {
+                            String objectType = null;
+                            JSONArray arrayEntries = new JSONArray();
+                            JSONArray entryArray = (JSONArray) entry;
+                            for (Object object : entryArray) {
+                                JSONObject arrayEntry = (JSONObject) parser.parse(jedis.get((String) object));
+                                objectType = (String) arrayEntry.get("objectName");
+                                arrayEntries.add(arrayEntry);
+                            }
+                            response.put(objectType, arrayEntries);
+                        } else {
+                            response.put(entryKey, entry);
                         }
-                        response.put(objectType, arrayEntries);
-                    } else {
-                        response.put(entryKey, entry);
                     }
+                    return response;
                 }
-                return response;
+            }
+            else {
+                throw new ResourceNotFoundException("Invalid object key");
             }
         } catch (ParseException e) {
             e.printStackTrace();
@@ -352,6 +360,60 @@ public class UserServiceImpl
 
 
         return Boolean.FALSE;
+    }
+
+    @Override
+    public Boolean deleteUser(String userUid) {
+        Jedis jedis = new Jedis("localhost");
+        try {
+            JSONObject userMetaData = (JSONObject) new JSONParser().parse(jedis.get(userUid));
+            long result = deleteUser(userMetaData, jedis);
+            if (result>0)
+            {
+                return Boolean.TRUE;
+            }
+            else
+            {
+                return Boolean.FALSE;
+            }
+        } catch (ParseException e) {
+            log.error("Failed while parsing. Exception: "+ e);
+        }
+        finally {
+            jedis.close();
+        }
+        return Boolean.FALSE;
+    }
+
+    private long deleteUser(JSONObject object, Jedis jedis)
+    {
+        long result = 0;
+        if (object != null)
+        {
+            for (Object entryKey : object.keySet())
+            {
+                Object entry = object.get(entryKey);
+                {
+                    if (entry instanceof JSONObject)
+                    {
+                        long res = jedis.del((String) ((JSONObject) entry).get("objectValue"));
+                        result = result + res;
+                    }
+                    else if (entry instanceof JSONArray)
+                    {
+                        JSONArray entryArray = (JSONArray) entry;
+                        for (Object place : entryArray) {
+                            long res = jedis.del((String) place);
+                            result = result + res;
+                        }
+                    }
+                }
+            }
+        }
+        long res = jedis.del((String) object.get("_uid"));
+        result = result + res;
+        log.info("Deleted " + String.valueOf(result) + " objects");
+        return result;
     }
 
     private Boolean isKeyMatched(String s, String s1) {
