@@ -8,7 +8,9 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang.Validate;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.ResourceNotFoundException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -163,17 +165,25 @@ public class UserController {
                              HttpServletResponse response) throws IOException, NoSuchAlgorithmException {
         String eTag = request.getHeader("If-None-Match");
         if (isTokenValidated(token, response, userUid)) {
-            JSONObject result = userService.newGetUser(userUid);
-            if (eTag != null) {
+            JSONObject result = null;
+            try {
+                result = userService.newGetUser(userUid);
+                if (eTag != null) {
 
-                String newETag = (String) result.get("eTag");
-                if (eTag.equals(newETag)) {
-                    response.sendError(304, "Object is not modified");
+                    String newETag = (String) result.get("eTag");
+                    if (eTag.equals(newETag)) {
+                        response.sendError(304, "Object is not modified");
+                    }
                 }
+                assert result != null;
+                return result.toJSONString();
+            } catch (ResourceNotFoundException e) {
+                response.sendError(404, "Requested Resource Not Found");
             }
-            return result.toJSONString();
+        } else {
+            throw new BadRequestException("Authentication Failed");
         }
-        throw new BadRequestException("Authentication Failed");
+        return String.valueOf(response);
     }
 
     @RequestMapping(value = "/v1/user/{userUid}", method = RequestMethod.PATCH)
@@ -197,6 +207,24 @@ public class UserController {
                 response.sendError(400, "Bad Request. Parameter doesn't match schema");
             }
         } else {
+            response.sendError(401, "Authorization Failed");
+        }
+        return null;
+    }
+
+
+    @ResponseBody
+    @RequestMapping(value = "/v1/user/{userUid}", method = RequestMethod.DELETE)
+    public String deleteUser(@PathVariable("userUid") String userUid,
+                             HttpServletResponse response,
+                             @RequestHeader String token) throws IOException {
+        Validate.notEmpty(userUid, "UserUid can not be empty");
+        Validate.notEmpty(token, "Token can not be empty");
+        try {
+            if (isTokenValidated(token, response, userUid)) {
+                return String.valueOf(userService.deleteUser(userUid));
+            }
+        } catch (IOException e) {
             response.sendError(401, "Authorization Failed");
         }
         return null;

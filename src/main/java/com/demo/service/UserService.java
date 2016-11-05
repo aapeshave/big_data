@@ -1,6 +1,7 @@
 package com.demo.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.elasticsearch.ResourceNotFoundException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public interface UserService {
      * @param pathToObject
      * @return
      */
-    JSONObject newGetUser(String pathToObject);
+    JSONObject newGetUser(String pathToObject) throws ResourceNotFoundException;
 
     /**
      *
@@ -59,4 +60,11 @@ public interface UserService {
      * @return
      */
     Boolean newUpdateUser(String userUid, String parameterName, String parameterKey, String parameterValue) throws ParseException, UnsupportedEncodingException, NoSuchAlgorithmException;
+
+    /**
+     *
+     * @param userUid
+     * @return
+     */
+    Boolean deleteUser(String userUid);
 }
