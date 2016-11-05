@@ -10,6 +10,7 @@ import com.github.fge.jsonschema.main.JsonValidator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.elasticsearch.ResourceNotFoundException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -147,4 +148,23 @@ public class SchemaServiceImpl implements SchemaService {
 			jedis.close();
 		}
 	}
+
+    @Override
+    public String patchSchema(String pathToSchema, String parameterName, String parameterValue) {
+        String parentSchemaString = getSchemaFromRedis(pathToSchema);
+        if (!StringUtils.isBlank(parentSchemaString))
+        {
+            try {
+                JSONObject parentSchemaObject = (JSONObject) new JSONParser().parse(parentSchemaString);
+                int i = 0;
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+        else
+        {
+            throw new ResourceNotFoundException("Requested Resource Not Found");
+        }
+        return null;
+    }
 }

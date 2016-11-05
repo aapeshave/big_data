@@ -21,7 +21,6 @@ public interface SchemaService {
      * @param pathToSchema This is patch to schema
      * @return returns schema
      */
-    @Deprecated
     String getSchemaFromRedis(String pathToSchema);
 
     /**
@@ -51,4 +50,6 @@ public interface SchemaService {
      * @return returns key of added schema
      */
     String addNewSchema(String schemaBody);
+
+    String patchSchema(String pathToSchema, String parameterName, String parameterValue);
 }

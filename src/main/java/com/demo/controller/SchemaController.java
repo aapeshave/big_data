@@ -63,8 +63,10 @@ public class SchemaController {
     }
 
     // TODO: Implementation is not done
-    @RequestMapping(value = "/{uuid}/{propertyName}", method = RequestMethod.PATCH)
-    public String updateSchema(@PathVariable("uuid") String schemaPath, @PathVariable("propertyName") String propertyName, @RequestParam String value) {
+    @RequestMapping(value = "/{uuid}", method = RequestMethod.PATCH)
+    public String updateSchema(@PathVariable("uuid") String schemaPath,
+                               @RequestParam String propertyName,
+                               @RequestParam String value) {
         System.out.println("schemaPAth: " + schemaPath + "property Name: " + propertyName);
         return null;
     }
