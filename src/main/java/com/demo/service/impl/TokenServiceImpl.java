@@ -5,6 +5,7 @@ import com.demo.pojo.AccessToken;
 import com.demo.service.TokenService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.jsonwebtoken.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -86,6 +87,7 @@ public class TokenServiceImpl
         String tokenId = "token" + "__" + key;
         AccessToken token = new AccessToken(tokenId, ISSUER, getNextYearDate(), URL, role, builder.compact());
         ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
         try {
             jedis.set(tokenId, mapper.writeValueAsString(token));
         } finally {
