@@ -4,9 +4,11 @@ import com.demo.service.SchemaService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.fge.jackson.JsonLoader;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
+import com.github.fge.jsonschema.core.report.ProcessingMessage;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.github.fge.jsonschema.main.JsonValidator;
+import org.apache.commons.lang.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,6 +22,7 @@ import redis.clients.jedis.Jedis;
 import javax.ws.rs.BadRequestException;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 @Service
@@ -81,10 +84,14 @@ public class SchemaServiceImpl implements SchemaService {
 			final JsonNode s = JsonLoader.fromString(jsonSchema);
 
 			final JsonSchemaFactory factory = JsonSchemaFactory.byDefault();
-			JsonValidator v = factory.getValidator();
+			JsonValidator validator = factory.getValidator();
 
 			ProcessingReport report = null;
-			report = v.validate(s, d);
+			report = validator.validateUnchecked(s, d, Boolean.TRUE);
+//            if (isSchemaFreeFromErrors(report))
+//            {
+//                log.info("Schema is free form warnings");
+//            }
 			if (report != null) {
 				if (!report.toString().contains("success")) {
                     throw new ProcessingException(report.toString());
@@ -166,5 +173,36 @@ public class SchemaServiceImpl implements SchemaService {
             throw new ResourceNotFoundException("Requested Resource Not Found");
         }
         return null;
+    }
+
+    private Boolean isSchemaFreeFromErrors(ProcessingReport report)
+    {
+        Validate.notNull(report);
+        Iterator<ProcessingMessage> processingMessageIterator = report.iterator();
+        int flag = 0;
+        while (processingMessageIterator.hasNext())
+        {
+            JsonNode messageNode = processingMessageIterator.next().asJson();
+            JsonNode message = messageNode.get("message");
+            JsonNode level = messageNode.get("level");
+            if (level.textValue().equals("warning"))
+            {
+                log.warn("Warning: " + message);
+                flag = 1;
+            }
+            else if (level.textValue().equals("error"))
+            {
+                log.error("Error: " + message);
+                flag = 1;
+            }
+        }
+        if (flag ==1)
+        {
+            return Boolean.FALSE;
+        }
+        else
+        {
+            return Boolean.TRUE;
+        }
     }
 }

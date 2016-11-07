@@ -15,6 +15,118 @@ public class SchemaServiceTest {
 
     SchemaServiceImpl schemaService;
 
+    public static final String SCHEMA__USER = "{\n" +
+            "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
+            "  \"objectName\": \"user\",\n" +
+            "  \"type\": \"object\",\n" +
+            "  \"properties\": {\n" +
+            "    \"password\": {\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    \"_createdOn\": {\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    \"role\": {\n" +
+            "      \"objectName\": \"role\",\n" +
+            "      \"type\": \"object\",\n" +
+            "      \"properties\": {\n" +
+            "        \"_createdOn\": {\n" +
+            "          \"type\": \"string\"\n" +
+            "        },\n" +
+            "        \"roleId\": {\n" +
+            "          \"type\": \"string\"\n" +
+            "        },\n" +
+            "        \"roleName\": {\n" +
+            "          \"type\": \"string\"\n" +
+            "        },\n" +
+            "        \"objectName\": {\n" +
+            "          \"type\": \"string\"\n" +
+            "        },\n" +
+            "        \"_uid\": {\n" +
+            "          \"type\": \"string\"\n" +
+            "        }\n" +
+            "      },\n" +
+            "      \"required\": [\n" +
+            "        \"roleId\",\n" +
+            "        \"roleName\",\n" +
+            "        \"objectName\"\n" +
+            "      ]\n" +
+            "    },\n" +
+            "    \"objectName\": {\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    \"eTag\": {\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    \"_uid\": {\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    \"token\": {\n" +
+            "      \"type\": \"array\",\n" +
+            "      \"items\": {\n" +
+            "        \"objectName\": \"token\",\n" +
+            "        \"type\": \"object\",\n" +
+            "        \"properties\": {\n" +
+            "          \"validTill\": {\n" +
+            "            \"type\": \"integer\"\n" +
+            "          },\n" +
+            "          \"tokenUid\": {\n" +
+            "            \"type\": \"string\"\n" +
+            "          },\n" +
+            "          \"role\": {\n" +
+            "            \"type\": \"string\"\n" +
+            "          },\n" +
+            "          \"tokenId\": {\n" +
+            "            \"type\": \"string\"\n" +
+            "          },\n" +
+            "          \"accessUrl\": {\n" +
+            "            \"type\": \"string\"\n" +
+            "          },\n" +
+            "          \"createdOn\": {\n" +
+            "            \"type\": \"integer\"\n" +
+            "          },\n" +
+            "          \"issuer\": {\n" +
+            "            \"type\": \"string\"\n" +
+            "          }\n" +
+            "        }\n" +
+            "      }\n" +
+            "    },\n" +
+            "    \"username\": {\n" +
+            "      \"type\": \"string\"\n" +
+            "    }\n" +
+            "  },\n" +
+            "  \"required\": [\n" +
+            "    \"password\",\n" +
+            "    \"role\",\n" +
+            "    \"objectName\",\n" +
+            "    \"username\"\n" +
+            "  ]\n" +
+            "}";
+    public static final String SAMPLE_USER_BODY = "{\n" +
+            "\t\"objectName\": \"user\",\n" +
+            "\t\"username\": \"sampada\",\n" +
+            "\t\"password\": \"admin\",\n" +
+            "\t\"role\":{\n" +
+            "\t\t\"objectName\": \"role\",\n" +
+            "\t\t\"roleId\": \"1\",\n" +
+            "\t\t\"roleName\": \"read__only\",\n" +
+            "\t\t\"attribute\": \"sample\"\n" +
+            "\t}\n" +
+            "}";
+
+    public static final String SAMPLE_INVALID_USER_BODY = "{\n" +
+            "\t\"objectName\": \"user\",\n" +
+            "\t\"username\": \"sampada\",\n" +
+            "\t\"attribute\": \"hello\",\n" +
+            "\t\"password\": \"admin\",\n" +
+            "\t\"role\":{\n" +
+            "\t\t\"objectName\": \"role\",\n" +
+            "\t\t\"roleId\": \"1\",\n" +
+            "\t\t\"roleName\": \"read__only\",\n" +
+            "\t\t\"attribute\": \"sample\"\n" +
+            "\t}\n" +
+            "}";
+
     public static final String SCHEMA__address = "{\n" +
             "  \"objectName\": \"address\",\n" +
             "  \"type\": \"object\",\n" +
@@ -64,13 +176,24 @@ public class SchemaServiceTest {
     }
 
     @Test
-    public void testValidateSchema() throws Exception {
+    public void testValidateSchemaWithValidUser() throws Exception {
+        String pathToSchema = "SCHEMA__user";
+        String sampleUser =  SAMPLE_USER_BODY;
+        Boolean isSchemaValidated = schemaService.validateSchema(pathToSchema, sampleUser);
+        Assert.assertTrue(isSchemaValidated);
+    }
 
+    @Test
+    public void testValidateSchemaWithInvalidUser() throws Exception
+    {
+        String pathToSchema = "SCHEMA__user";
+        String sampleInvalidUserBody =  SAMPLE_INVALID_USER_BODY;
+        Boolean isSchemaValidated = schemaService.validateSchema(pathToSchema, sampleInvalidUserBody);
+        Assert.assertTrue(isSchemaValidated);
     }
 
     @Test
     public void testValidateFieldInSchema() throws Exception {
-
     }
 
     @Test
