@@ -1,12 +1,11 @@
 package com.demo.pojo;
 
 
-import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 
-public class AccessToken
-{
+public class AccessToken {
     private String tokenId;
     private String issuer;
     private Date createdOn;
@@ -82,6 +81,15 @@ public class AccessToken
     public void setTokenUid(String tokenUid) {
         this.tokenUid = tokenUid;
     }
+
+    public String getObjectName() {
+        return objectName;
+    }
+
+    public void setObjectName(String objectName) {
+        this.objectName = "token";
+    }
+
 
     @Override
     public String toString() {

@@ -66,7 +66,8 @@ public class UserServiceTest {
 
     @Test
     public void testGetUser() throws Exception {
-
+        JSONObject object = userService.newGetUser("user__3");
+        Assert.assertNotNull(object);
     }
 
     @Test
