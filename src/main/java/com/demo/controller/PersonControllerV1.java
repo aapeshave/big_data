@@ -77,4 +77,14 @@ public class PersonControllerV1 {
         }
         return null;
     }
+
+    @RequestMapping(value = "/{uuid}", method = RequestMethod.PATCH)
+    public String patchPerson(@PathVariable("uuid") String personId,
+                              @RequestHeader String token,
+                              @RequestParam String parameterName,
+                              @RequestBody String parameterValue,
+                              HttpServletResponse response)
+    {
+        return null;
+    }
 }
