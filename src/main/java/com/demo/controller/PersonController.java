@@ -26,6 +26,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 @RestController
+@Deprecated
 @Api(description = "API to do operations on person")
 public class PersonController {
 
