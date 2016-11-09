@@ -150,7 +150,7 @@ public class SchemaServiceImpl implements SchemaService {
 			}
 			return response.toString();
 		} catch (ParseException e) {
-			throw new BadRequestException("Schema Generation Failed.Can not parse data");
+			throw new BadRequestException("Schema Generation Failed. Can not parse data");
 		} finally {
 			jedis.close();
 		}
