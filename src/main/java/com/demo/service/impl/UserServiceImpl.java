@@ -186,7 +186,7 @@ public class UserServiceImpl
             }
 
             if (role != null) {
-                processAndAddToken(userObject, "token", role, (String) userObject.get("_uid"), responseObject);
+                processAndAddToken(userObject, "token", role, (String) userObject.get("_id"), responseObject);
             }
             userObject.put("eTag", calculateETag(userObject));
             responseObject.put("eTag", userObject.get("eTag"));
@@ -215,7 +215,7 @@ public class UserServiceImpl
         String uid;
         jedis.incr(objectType);
         uid = objectType + "__" + jedis.get(objectType);
-        object.put("_uid", uid);
+        object.put("_id", uid);
         object.put("_createdOn", getUnixTimestamp());
         return uid;
     }
@@ -228,7 +228,7 @@ public class UserServiceImpl
         String objectType = (String) bodyObj.get("objectName");
         jedis.incr(objectType);
         String uid = objectType + "__" + jedis.get(objectType);
-        userObject.put("_uid", uid);
+        userObject.put("_id", uid);
         userObject.put("_createdOn", getUnixTimestamp());
         responseObject.put(objectType, uid);
     }
@@ -307,12 +307,12 @@ public class UserServiceImpl
                     Object objectToBeChanged = parentObjectToBeChanged.get(parameterName);
                     if (objectToBeChanged instanceof String) {
                         Jedis jedis = new Jedis("localhost");
-                        if (!parentObjectToBeChanged.get("_uid").equals(userMetaData.get("_uid"))) {
+                        if (!parentObjectToBeChanged.get("_id").equals(userMetaData.get("_id"))) {
                             parentObjectToBeChanged.remove(parameterName);
                             parentObjectToBeChanged.put(parameterName, parameterValue);
                             parentObjectToBeChanged.put("_modifiedOn", getUnixTimestamp());
                             parentObjectToBeChanged.put("eTag", calculateETag(parentObjectToBeChanged));
-                            jedis.set((String) parentObjectToBeChanged.get("_uid"), parentObjectToBeChanged.toJSONString());
+                            jedis.set((String) parentObjectToBeChanged.get("_id"), parentObjectToBeChanged.toJSONString());
                             userMetaData.put("eTag", calculateETag(userMetaData));
                             jedis.set(userUid, userMetaData.toJSONString());
                         } else {
@@ -337,8 +337,8 @@ public class UserServiceImpl
                     if (requestObject.get("objectName").equals(objectToBeChanged.get("objectName"))) {
                         Jedis jedis = new Jedis("localhost");
                         String createdOn = (String) objectToBeChanged.get("_createdOn");
-                        String uid = (String) objectToBeChanged.get("_uid");
-                        requestObject.put("_uid", uid);
+                        String uid = (String) objectToBeChanged.get("_id");
+                        requestObject.put("_id", uid);
                         requestObject.put("_createdOn", createdOn);
                         requestObject.put("_modifiedOn", getUnixTimestamp());
                         requestObject.put("eTag", calculateETag(requestObject));
@@ -397,7 +397,7 @@ public class UserServiceImpl
                 }
             }
         }
-        long res = jedis.del((String) object.get("_uid"));
+        long res = jedis.del((String) object.get("_id"));
         result = result + res;
         log.info("Deleted " + String.valueOf(result) + " objects");
         return result;
