@@ -42,7 +42,7 @@ public class SchemaServiceTest {
             "        \"objectName\": {\n" +
             "          \"type\": \"string\"\n" +
             "        },\n" +
-            "        \"_uid\": {\n" +
+            "        \"_id\": {\n" +
             "          \"type\": \"string\"\n" +
             "        }\n" +
             "      },\n" +
@@ -58,7 +58,7 @@ public class SchemaServiceTest {
             "    \"eTag\": {\n" +
             "      \"type\": \"string\"\n" +
             "    },\n" +
-            "    \"_uid\": {\n" +
+            "    \"_id\": {\n" +
             "      \"type\": \"string\"\n" +
             "    },\n" +
             "    \"token\": {\n" +

@@ -102,7 +102,7 @@ public class PersonServiceImpl
                         jedis.incr(objectType);
                         uid = objectType + "__" + jedis.get(objectType);
                         ((JSONObject) object).put("_createdOn", getUnixTimestamp());
-                        ((JSONObject) object).put("_uid", uid);
+                        ((JSONObject) object).put("_id", uid);
 
                         //Add to Jedis
                         jedis.set(uid, ((JSONObject) object).toJSONString());
@@ -126,7 +126,7 @@ public class PersonServiceImpl
                         jedis.incr(objectType);
                         uid = objectType + "__" + jedis.get(objectType);
                         ((JSONObject) property).put("_createdOn", getUnixTimestamp());
-                        ((JSONObject) property).put("_uid", uid);
+                        ((JSONObject) property).put("_id", uid);
                         jedis.set(uid, ((JSONObject) property).toJSONString());
                         // Creating link over here
 
@@ -205,7 +205,7 @@ public class PersonServiceImpl
         jedis.incr(objectType);
         String uid = objectType + "__" + jedis.get(objectType);
         personObject.put("_createdOn", getUnixTimestamp());
-        personObject.put("_uid", uid);
+        personObject.put("_id", uid);
         responseObject.put(objectType, uid);
     }
 

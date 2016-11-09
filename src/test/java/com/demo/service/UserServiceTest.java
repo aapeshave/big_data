@@ -37,7 +37,7 @@ public class UserServiceTest {
             "      \"tokenId\": \"nisi quis ut\"\n" +
             "    }\n" +
             "  ],\n" +
-            "  \"_uid\": \"dolor\",\n" +
+            "  \"_id\": \"dolor\",\n" +
             "  \"createdOn\": \"ullamco in irure\"\n" +
             "}";
 
@@ -50,7 +50,7 @@ public class UserServiceTest {
             "    \"roleId\": \"dolor mollit labore\",\n" +
             "    \"roleName\": \"admin\"\n" +
             "  },\n" +
-            "  \"_uid\": \"dolor\",\n" +
+            "  \"_id\": \"dolor\",\n" +
             "  \"createdOn\": \"ullamco in irure\"\n" +
             "}";
 
@@ -97,7 +97,7 @@ public class UserServiceTest {
                 "    \"roleId\": \"1\",\n" +
                 "    \"roleName\": \"read__only\",\n" +
                 "    \"objectName\": \"role\",\n" +
-                "    \"_uid\": \"role__1\"\n" +
+                "    \"_id\": \"role__1\"\n" +
                 "  }";
         String userUid = "user__1";
         String parameterName = "role";
@@ -114,7 +114,7 @@ public class UserServiceTest {
 
         JSONObject resultObject = (JSONObject) new JSONParser().parse(result);
 
-        String userUid = (String) resultObject.get("_uid");
+        String userUid = (String) resultObject.get("_id");
         Boolean resultOfDelete = userService.deleteUser(userUid);
         Assert.assertTrue(resultOfDelete);
     }
