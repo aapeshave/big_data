@@ -2,7 +2,11 @@ package com.demo.controller;
 
 import com.demo.service.PersonService;
 import com.demo.service.SchemaService;
+import com.demo.service.TokenService;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureException;
 import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.POST;
 import java.io.IOException;
 
@@ -28,10 +33,13 @@ public class PersonControllerV1 {
     @Autowired
     PersonService _personService;
 
+    @Autowired
+    TokenService _tokenService;
+
     private static final String SCHEMA_LOCATION = "SCHEMA__person";
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    @ApiOperation(value = "Create a person",response = String.class)
+    @ApiOperation(value = "Create a person", response = String.class)
     @ApiResponses(value = {
             @ApiResponse(code = 403,
                     message = "json schema not validated",
@@ -63,7 +71,7 @@ public class PersonControllerV1 {
     }
 
     @RequestMapping(value = "/{uuid}", method = RequestMethod.GET)
-    @ApiOperation(value = "Get a person from database",response = String.class)
+    @ApiOperation(value = "Get a person from database", response = String.class)
     @ApiResponses(value = {
             @ApiResponse(code = 500,
                     message = "Internal Server Error",
@@ -83,8 +91,17 @@ public class PersonControllerV1 {
                               @RequestHeader String token,
                               @RequestParam String parameterName,
                               @RequestBody String parameterValue,
-                              HttpServletResponse response)
-    {
+                              HttpServletResponse response) throws IOException {
+        try {
+            if (_tokenService.isTokenValidated(token, personId))
+            {
+
+            }
+        } catch (ExpiredJwtException e) {
+            response.sendError(401, "Token is expired. Exception: " + e.toString());
+        } catch (SignatureException | MalformedJwtException e) {
+            response.sendError(401, "Token is malformed. Exception: " + e.toString());
+        }
         return null;
     }
 }

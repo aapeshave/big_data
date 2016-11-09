@@ -129,7 +129,7 @@ public class UserController {
                 response.sendError(401, "Token is not authorized");
             }
         } else {
-            throw new NotAuthorizedException("Token is not missing");
+            throw new NotAuthorizedException("Token is missing");
         }
         return Boolean.FALSE;
     }
