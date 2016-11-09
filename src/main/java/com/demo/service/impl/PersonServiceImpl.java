@@ -115,14 +115,17 @@ public class PersonServiceImpl
                     JSONObject jsonObject = new JSONObject();
                     objectType = (String) ((JSONObject) property).get("objectName");
                     jsonObject.put("objectType", objectType);
-                    if (objectType.equals("user")) {
+                    if (objectType.equals("user"))
+                    {
                         String userString = userService.newAddUser((JSONObject) property);
                         JSONObject userObject = (JSONObject) parser.parse(userString);
                         jsonObject.put("objectValue", userObject.get("user"));
                         responseObject.put("Authorization", userObject.get("Authorization"));
                         responseObject.put(objectType, userObject.get("user"));
                         personObject.put(objectType, jsonObject);
-                    } else {
+                    }
+                    else
+                        {
                         jedis.incr(objectType);
                         uid = objectType + "__" + jedis.get(objectType);
                         ((JSONObject) property).put("_createdOn", getUnixTimestamp());
@@ -162,8 +165,12 @@ public class PersonServiceImpl
                 for (Object entryKey : resultObject.keySet()) {
                     Object entry = resultObject.get(entryKey);
                     if (entry instanceof JSONObject) {
+                        if (((JSONObject) entry).get("objectType").equals("user")) {
+                            JSONObject jsonObject = userService.newGetUser((String) ((JSONObject) entry).get("objectValue"));
+                            response.put(((JSONObject) entry).get("objectType"), jsonObject);
+                        }
                         JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
-                        response.put(((JSONObject) entry).get("objectName"), object);
+                        response.put(((JSONObject) entry).get("objectType"), object);
                     } else if (entry instanceof JSONArray) {
                         JSONArray arrayEntries = new JSONArray();
                         JSONArray entryArray = (JSONArray) entry;
