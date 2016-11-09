@@ -162,8 +162,12 @@ public class PersonServiceImpl
                 for (Object entryKey : resultObject.keySet()) {
                     Object entry = resultObject.get(entryKey);
                     if (entry instanceof JSONObject) {
+                        if (((JSONObject) entry).get("objectType").equals("user")) {
+                            JSONObject jsonObject = userService.newGetUser((String) ((JSONObject) entry).get("objectValue"));
+                            response.put(((JSONObject) entry).get("objectType"), jsonObject);
+                        }
                         JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
-                        response.put(((JSONObject) entry).get("objectName"), object);
+                        response.put(((JSONObject) entry).get("objectType"), object);
                     } else if (entry instanceof JSONArray) {
                         JSONArray arrayEntries = new JSONArray();
                         JSONArray entryArray = (JSONArray) entry;
