@@ -63,6 +63,23 @@ public class TokenServiceImpl
     }
 
     @Override
+    public String getUserIdFromToken(String tokenBody) throws UnsupportedJwtException, IllegalArgumentException {
+        Claims claims;
+        try {
+            claims = Jwts.parser()
+                    .setSigningKey(DatatypeConverter.parseBase64Binary(API_SECRET))
+                    .parseClaimsJws(tokenBody).getBody();
+            return (String) claims.get("user");
+        } catch (UnsupportedJwtException e) {
+            log.error(e);
+            throw new UnsupportedJwtException("Getting userId from token failed. Unsupported JWT");
+        } catch (IllegalArgumentException e) {
+            log.error(e);
+            throw new IllegalArgumentException("Failed while getting userId from token. Illegal argument exception");
+        }
+    }
+
+    @Override
     public AccessToken createAccessTokenAPI(String userUid, String role, String subject) throws JsonProcessingException {
         SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 

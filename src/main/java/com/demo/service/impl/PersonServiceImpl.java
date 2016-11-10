@@ -190,6 +190,11 @@ public class PersonServiceImpl
         return null;
     }
 
+    @Override
+    public Boolean newUpdatePerson(String personId, String parameterName, String parameterKey, String parameterValue) {
+        return null;
+    }
+
     private JSONObject getJSONObjectFromObject(Jedis jedis, JSONObject entry, JSONParser parser) throws ParseException {
         JSONObject object = entry;
         String objectString = jedis.get((String) object.get("objectValue"));

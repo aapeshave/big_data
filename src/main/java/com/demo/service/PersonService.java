@@ -31,4 +31,15 @@ public interface PersonService {
      * @return
      */
     String v1GetPerson(String persionUid);
+
+    /**
+     *
+     * @param personId for the person
+     * @param parameterName is the parameter that needs to be changed
+     * @param parameterKey is the key of the parameter that needs to be changed
+     * @param parameterValue is the value that needs to be replaced
+     * @return true if update is successful, otherwise return false
+     */
+    Boolean newUpdatePerson(String personId, String parameterName, String parameterKey, String parameterValue);
+
 }

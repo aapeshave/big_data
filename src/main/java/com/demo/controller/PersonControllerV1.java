@@ -9,6 +9,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
 import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -95,6 +96,8 @@ public class PersonControllerV1 {
         try {
             if (_tokenService.isTokenValidated(token, personId))
             {
+                String userUid = _tokenService.getUserIdFromToken(token);
+                Validate.notNull(userUid, "UserUid can not be null to do further actions");
 
             }
         } catch (ExpiredJwtException e) {
