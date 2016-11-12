@@ -1,6 +1,8 @@
 package com.demo.service;
 
 
+import org.elasticsearch.ResourceNotFoundException;
+
 public interface PersonService {
 
     /**
@@ -13,30 +15,28 @@ public interface PersonService {
 
     /**
      * Return person data
+     *
      * @param personUID
      * @return
      */
     String getPerson(String personUID);
 
     /**
-     *
      * @param personBody
      * @return
      */
     String v1AddPerson(String personBody);
 
     /**
-     *
      * @param persionUid
      * @return
      */
-    String v1GetPerson(String persionUid);
+    String v1GetPerson(String persionUid) throws ResourceNotFoundException;
 
     /**
-     *
-     * @param personId for the person
-     * @param parameterName is the parameter that needs to be changed
-     * @param parameterKey is the key of the parameter that needs to be changed
+     * @param personId       for the person
+     * @param parameterName  is the parameter that needs to be changed
+     * @param parameterKey   is the key of the parameter that needs to be changed
      * @param parameterValue is the value that needs to be replaced
      * @return true if update is successful, otherwise return false
      */

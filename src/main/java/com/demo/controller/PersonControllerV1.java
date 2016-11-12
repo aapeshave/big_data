@@ -10,6 +10,7 @@ import io.jsonwebtoken.SignatureException;
 import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.elasticsearch.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,9 +81,13 @@ public class PersonControllerV1 {
                             name = "GENERAL_ERROR",
                             description = "unhandled exception occured"))
     })
-    public String getPerson(@PathVariable("uuid") String uid) {
-        if (!StringUtils.isBlank(uid)) {
-            return _personService.v1GetPerson(uid);
+    public String getPerson(@PathVariable("uuid") String uid, HttpServletResponse response) throws IOException {
+        try {
+            if (!StringUtils.isBlank(uid)) {
+                return _personService.v1GetPerson(uid);
+            }
+        } catch (ResourceNotFoundException e) {
+            response.sendError(404, "Requested Person Entry not Found");
         }
         return null;
     }

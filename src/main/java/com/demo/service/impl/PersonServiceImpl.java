@@ -8,6 +8,7 @@ import com.demo.service.TokenService;
 import com.demo.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.ResourceNotFoundException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -152,7 +153,7 @@ public class PersonServiceImpl
 
     @SuppressWarnings("unchecked")
     @Override
-    public String v1GetPerson(String personUid) {
+    public String v1GetPerson(String personUid) throws ResourceNotFoundException{
         Jedis jedis = new Jedis("localhost");
         JSONObject response = new JSONObject();
         JSONParser parser = new JSONParser();
@@ -184,7 +185,11 @@ public class PersonServiceImpl
                 }
                 return response.toJSONString();
             }
-        } catch (ParseException e) {
+        }
+        catch (NullPointerException e){
+            throw new ResourceNotFoundException("Can not find person with UID");
+        }
+        catch (ParseException e) {
             e.printStackTrace();
         }
         return null;
