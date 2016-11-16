@@ -15,9 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.POST;
 import java.io.IOException;
 
 /**
@@ -58,8 +55,7 @@ public class PersonControllerV1 {
         if (!(body.isEmpty())) {
             try {
                 if (_schemaService.validateSchema(SCHEMA_LOCATION, body)) {
-                    String result = _personService.v1AddPerson(body);
-                    return result;
+                    return _personService.v1AddPerson(body);
                 } else {
                     response.sendError(403, "Schema not validated");
                 }
@@ -99,8 +95,7 @@ public class PersonControllerV1 {
                               @RequestBody String parameterValue,
                               HttpServletResponse response) throws IOException {
         try {
-            if (_tokenService.isTokenValidated(token, personId))
-            {
+            if (_tokenService.isTokenValidated(token, personId)) {
                 String userUid = _tokenService.getUserIdFromToken(token);
                 Validate.notNull(userUid, "UserUid can not be null to do further actions");
 

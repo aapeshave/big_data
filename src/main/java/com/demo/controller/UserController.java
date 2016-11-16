@@ -4,7 +4,6 @@ import com.demo.service.SchemaService;
 import com.demo.service.TokenService;
 import com.demo.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.fge.jsonschema.core.exceptions.*;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -143,19 +142,17 @@ public class UserController {
             Validate.notNull(bodyObject);
             String pathToSchema = (String) bodyObject.get("objectName");
             try {
-                if (schemaService.validateSchema("SCHEMA__" + pathToSchema, body))
-                {
+                if (schemaService.validateSchema("SCHEMA__" + pathToSchema, body)) {
                     String result = userService.newAddUser(bodyObject);
                     result = calculateAndAddETag(response, result);
                     return result;
-                }
-                else {
+                } else {
                     response.sendError(400, "Can not Validate Schema");
                 }
             } catch (IOException | ParseException | NoSuchAlgorithmException e) {
                 e.printStackTrace();
             } catch (ProcessingException e) {
-                response.sendError(400, "Can not Validate Schema. Message: " + e.toString() );
+                response.sendError(400, "Can not Validate Schema. Message: " + e.toString());
             }
         } catch (ParseException e) {
             response.sendError(500, "Internal Server Error. Parsing Failed");

@@ -153,7 +153,7 @@ public class PersonServiceImpl
 
     @SuppressWarnings("unchecked")
     @Override
-    public String v1GetPerson(String personUid) throws ResourceNotFoundException{
+    public String v1GetPerson(String personUid) throws ResourceNotFoundException {
         Jedis jedis = new Jedis("localhost");
         JSONObject response = new JSONObject();
         JSONParser parser = new JSONParser();
@@ -185,11 +185,9 @@ public class PersonServiceImpl
                 }
                 return response.toJSONString();
             }
-        }
-        catch (NullPointerException e){
+        } catch (NullPointerException e) {
             throw new ResourceNotFoundException("Can not find person with UID");
-        }
-        catch (ParseException e) {
+        } catch (ParseException e) {
             e.printStackTrace();
         }
         return null;
