@@ -15,21 +15,18 @@ import java.security.NoSuchAlgorithmException;
 @Service
 public interface UserService {
     /**
-     *
      * @param userObject
      * @return
      */
     String addUser(JSONObject userObject) throws JsonProcessingException, ParseException;
 
     /**
-     *
      * @param userPath
      * @return
      */
     String getUser(String userPath) throws ParseException;
 
     /**
-     *
      * @param userPath
      * @param paramterName
      * @param parameterValue
@@ -38,21 +35,18 @@ public interface UserService {
     String updateUser(String userPath, String paramterName, String parameterValue);
 
     /**
-     *
      * @param userObject
      * @return
      */
     String newAddUser(JSONObject userObject);
-    
+
     /**
-     * 
      * @param pathToObject
      * @return
      */
     JSONObject newGetUser(String pathToObject) throws ResourceNotFoundException;
 
     /**
-     *
      * @param userUid
      * @param parameterName
      * @param parameterKey
@@ -62,7 +56,6 @@ public interface UserService {
     Boolean newUpdateUser(String userUid, String parameterName, String parameterKey, String parameterValue) throws ParseException, UnsupportedEncodingException, NoSuchAlgorithmException;
 
     /**
-     *
      * @param userUid
      * @return
      */

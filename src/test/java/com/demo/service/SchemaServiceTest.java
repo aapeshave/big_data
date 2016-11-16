@@ -1,10 +1,13 @@
 package com.demo.service;
 
 import com.demo.service.impl.SchemaServiceImpl;
+import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.io.IOException;
 
 import static org.junit.Assert.*;
 
@@ -13,6 +16,24 @@ import static org.junit.Assert.*;
  */
 public class SchemaServiceTest {
 
+    public static final String TEST_SCHEMA_DATA = "{\n" +
+            "  \"objectName\": \"dolore exercitation enim\",\n" +
+            "  \"sampleObject\": {\n" +
+            "    \"objectName\": \"in commodo\",\n" +
+            "    \"name\": \"exercitation consectetur veniam est\",\n" +
+            "    \"adddress\": \"deserunt adipisicing\"\n" +
+            "  }\n" +
+            "}";
+
+    public static final String TEST_INVALID_DATA = "{\n" +
+            "  \"objectName\": \"test\",\n" +
+            "  \"sampleObject\": {\n" +
+            "    \"objectName\": \"sampleObject\",\n" +
+            "    \"name\": \"exercitation consectetur veniam est\",\n" +
+            "    \"adddress\": \"deserunt adipisicing\",\n" +
+            "    \"attribute\": \"ONe\"\n" +
+            "  }\n" +
+            "}";
     SchemaServiceImpl schemaService;
 
     public static final String SCHEMA__USER = "{\n" +
@@ -190,6 +211,16 @@ public class SchemaServiceTest {
         String sampleInvalidUserBody =  SAMPLE_INVALID_USER_BODY;
         Boolean isSchemaValidated = schemaService.validateSchema(pathToSchema, sampleInvalidUserBody);
         Assert.assertTrue(isSchemaValidated);
+    }
+
+    @Test
+    public void testSampleSchema() throws IOException, ProcessingException {
+        String pathToSchema = "SCHEMA__test";
+        String schema = schemaService.getSchemaFromRedis(pathToSchema);
+        // String schemaData = TEST_SCHEMA_DATA;
+        String schemaData = TEST_INVALID_DATA;
+        Boolean schema__test = schemaService.validateSchema("SCHEMA__test", schemaData);
+        Assert.assertTrue(schema__test);
     }
 
     @Test

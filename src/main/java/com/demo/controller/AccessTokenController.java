@@ -66,7 +66,7 @@ public class AccessTokenController {
         } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
             e.printStackTrace();
         } catch (SignatureException e) {
-           response.sendError(403, "Can not validate token");
+            response.sendError(403, "Can not validate token");
         }
         return token;
     }

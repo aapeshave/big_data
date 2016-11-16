@@ -24,8 +24,7 @@ public class swaggerConfig {
                 .apiInfo(getApiInfo());
     }
 
-    private ApiInfo getApiInfo()
-    {
+    private ApiInfo getApiInfo() {
         return new ApiInfo(
                 "Swagger Api Documentation",
                 "This is sample api documentation for prototype big data class",
@@ -37,8 +36,7 @@ public class swaggerConfig {
         );
     }
 
-    private Contact contact()
-    {
+    private Contact contact() {
         return new Contact(
                 "Ajinkya Peshave",
                 "https://github.com/aapeshave/big_data",

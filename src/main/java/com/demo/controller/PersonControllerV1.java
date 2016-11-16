@@ -2,15 +2,19 @@ package com.demo.controller;
 
 import com.demo.service.PersonService;
 import com.demo.service.SchemaService;
+import com.demo.service.TokenService;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureException;
 import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import org.elasticsearch.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import java.io.IOException;
 
 /**
@@ -28,10 +32,13 @@ public class PersonControllerV1 {
     @Autowired
     PersonService _personService;
 
+    @Autowired
+    TokenService _tokenService;
+
     private static final String SCHEMA_LOCATION = "SCHEMA__person";
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    @ApiOperation(value = "Create a person",response = String.class)
+    @ApiOperation(value = "Create a person", response = String.class)
     @ApiResponses(value = {
             @ApiResponse(code = 403,
                     message = "json schema not validated",
@@ -48,8 +55,7 @@ public class PersonControllerV1 {
         if (!(body.isEmpty())) {
             try {
                 if (_schemaService.validateSchema(SCHEMA_LOCATION, body)) {
-                    String result = _personService.v1AddPerson(body);
-                    return result;
+                    return _personService.v1AddPerson(body);
                 } else {
                     response.sendError(403, "Schema not validated");
                 }
@@ -63,7 +69,7 @@ public class PersonControllerV1 {
     }
 
     @RequestMapping(value = "/{uuid}", method = RequestMethod.GET)
-    @ApiOperation(value = "Get a person from database",response = String.class)
+    @ApiOperation(value = "Get a person from database", response = String.class)
     @ApiResponses(value = {
             @ApiResponse(code = 500,
                     message = "Internal Server Error",
@@ -71,9 +77,33 @@ public class PersonControllerV1 {
                             name = "GENERAL_ERROR",
                             description = "unhandled exception occured"))
     })
-    public String getPerson(@PathVariable("uuid") String uid) {
-        if (!StringUtils.isBlank(uid)) {
-            return _personService.v1GetPerson(uid);
+    public String getPerson(@PathVariable("uuid") String uid, HttpServletResponse response) throws IOException {
+        try {
+            if (!StringUtils.isBlank(uid)) {
+                return _personService.v1GetPerson(uid);
+            }
+        } catch (ResourceNotFoundException e) {
+            response.sendError(404, "Requested Person Entry not Found");
+        }
+        return null;
+    }
+
+    @RequestMapping(value = "/{uuid}", method = RequestMethod.PATCH)
+    public String patchPerson(@PathVariable("uuid") String personId,
+                              @RequestHeader String token,
+                              @RequestParam String parameterName,
+                              @RequestBody String parameterValue,
+                              HttpServletResponse response) throws IOException {
+        try {
+            if (_tokenService.isTokenValidated(token, personId)) {
+                String userUid = _tokenService.getUserIdFromToken(token);
+                Validate.notNull(userUid, "UserUid can not be null to do further actions");
+
+            }
+        } catch (ExpiredJwtException e) {
+            response.sendError(401, "Token is expired. Exception: " + e.toString());
+        } catch (SignatureException | MalformedJwtException e) {
+            response.sendError(401, "Token is malformed. Exception: " + e.toString());
         }
         return null;
     }
