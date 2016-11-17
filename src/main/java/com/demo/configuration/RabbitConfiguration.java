@@ -35,8 +35,7 @@ public class RabbitConfiguration {
     }
 
     @Bean
-    public Queue queue() {
-        Queue queue = new Queue("myQueue");
-        return queue;
+    public Queue getOutBoundQueue() {
+        return new Queue("outboundQueue");
     }
 }
