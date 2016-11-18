@@ -1,17 +1,9 @@
 package com.demo;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.ui.freemarker.SpringTemplateLoader;
-
-import java.io.InputStream;
 
 @SpringBootApplication
 @EnableAutoConfiguration

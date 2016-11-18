@@ -3,6 +3,9 @@ package com.demo.service;
 
 import org.elasticsearch.ResourceNotFoundException;
 
+/**
+ * CRUD Operations related to Person
+ */
 public interface PersonService {
 
     /**

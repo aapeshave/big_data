@@ -1,6 +1,7 @@
 package com.demo.controller;
 
 import com.demo.service.PersonService;
+import com.demo.service.QueueService;
 import com.demo.service.SchemaService;
 import com.demo.service.TokenService;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
@@ -34,6 +35,9 @@ public class PersonControllerV1 {
 
     @Autowired
     TokenService _tokenService;
+
+    @Autowired
+    QueueService _queueService;
 
     private static final String SCHEMA_LOCATION = "SCHEMA__person";
 
@@ -105,6 +109,13 @@ public class PersonControllerV1 {
         } catch (SignatureException | MalformedJwtException e) {
             response.sendError(401, "Token is malformed. Exception: " + e.toString());
         }
+        return null;
+    }
+
+    @RequestMapping(value = "/message", method = RequestMethod.POST)
+    public String postMessage(@RequestBody String message)
+    {
+        _queueService.sendMessage(message);
         return null;
     }
 }
