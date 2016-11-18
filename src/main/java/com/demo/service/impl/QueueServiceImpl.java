@@ -22,24 +22,24 @@ public class QueueServiceImpl
     Queue _outQueue;
 
     @Autowired
-    private ApplicationContext myRabbitContext;
-    private AmqpTemplate myTemplate;
-    private AmqpAdmin myAdmin;
+    private ApplicationContext _rabbitApplicationContext;
+    private AmqpTemplate _amqpTemplate;
+    private AmqpAdmin _amqpAdmin;
 
     public QueueServiceImpl() {
         super();
-        this.myRabbitContext = new AnnotationConfigApplicationContext(RabbitConfiguration.class);
-        this.myTemplate = this.myRabbitContext.getBean(AmqpTemplate.class);
-        this.myAdmin = this.myRabbitContext.getBean(AmqpAdmin.class);
+        _rabbitApplicationContext = new AnnotationConfigApplicationContext(RabbitConfiguration.class);
+        _amqpTemplate = _rabbitApplicationContext.getBean(AmqpTemplate.class);
+        _amqpAdmin = _rabbitApplicationContext.getBean(AmqpAdmin.class);
         _outQueue = new Queue(OUT_QUEUE);
-        myAdmin.declareQueue(_outQueue);
+        _amqpAdmin.declareQueue(_outQueue);
     }
 
     @Override
     public void sendMessage(String message) {
-        myTemplate.send(_outQueue.getName(), processAndGetMessage(message));
+        _amqpTemplate.send(_outQueue.getName(), processAndGetMessage(message));
         // TODO: This is to demonstrate that String can be sent directly
-        // myTemplate.convertAndSend(_outQueue.getName(), message);
+        // _amqpTemplate.convertAndSend(_outQueue.getName(), message);
     }
 
     private Message processAndGetMessage(String data) {
