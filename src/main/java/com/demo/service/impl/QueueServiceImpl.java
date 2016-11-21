@@ -2,6 +2,19 @@ package com.demo.service.impl;
 
 import com.demo.configuration.RabbitConfiguration;
 import com.demo.service.QueueService;
+import org.apache.commons.lang.Validate;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.elasticsearch.client.transport.TransportClient;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +22,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -42,6 +60,28 @@ public class QueueServiceImpl
         // _amqpTemplate.convertAndSend(_outQueue.getName(), message);
     }
 
+    @Override
+    public void sendMessage(JSONObject jsonObject) {
+        Validate.notNull(jsonObject, "jsonObject is required");
+        _amqpTemplate.convertAndSend(_outQueue.getName(), processAndGetMessage(jsonObject.toJSONString()));
+        // onMessage(processAndGetMessage(jsonObject.toJSONString()));
+    }
+
+    private URL getURL(JSONObject jsonObject) {
+        String id = (String) jsonObject.get("_id");
+        String objectName = id.split("__", 2)[0];
+        String key = id.split("__", 2)[1];
+        Validate.notEmpty(objectName);
+        Validate.notEmpty(key);
+        try {
+            String file = "/test" + "/" + objectName + "/" + key;
+            return new URL("http", "localhost", 9200, file);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private Message processAndGetMessage(String data) {
         MessageProperties properties = new MessageProperties();
         properties.setPriority(0);
@@ -65,6 +105,31 @@ public class QueueServiceImpl
     @RabbitListener(queues = OUT_QUEUE)
     public void onMessage(Message data) {
         String message = new String(data.getBody(), StandardCharsets.UTF_8);
+        Validate.notEmpty(message);
+        try {
+            JSONObject jsonObject = (JSONObject) new JSONParser().parse(message);
+            URL url = getURL(jsonObject);
+            System.out.println(url);
+            jsonObject.remove("_id");
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            assert url != null;
+            try {
+                HttpPost postRequest = new HttpPost(url.toURI());
+                StringEntity entity = new StringEntity(jsonObject.toJSONString(), ContentType.APPLICATION_JSON);
+                postRequest.setEntity(entity);
+                CloseableHttpResponse httpResponse = httpClient.execute(postRequest);
+                System.out.print(httpResponse.toString());
+
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
         System.out.println("Data Received: " + message);
     }
 }
