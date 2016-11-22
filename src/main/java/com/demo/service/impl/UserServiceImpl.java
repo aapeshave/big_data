@@ -1,5 +1,6 @@
 package com.demo.service.impl;
 
+import com.demo.service.QueueService;
 import com.demo.service.TokenService;
 import com.demo.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,8 +33,12 @@ import java.util.Map;
 @Configurable("jedisConfiguration")
 public class UserServiceImpl
         implements UserService {
+
     @Autowired
     TokenService tokenService;
+
+    @Autowired
+    QueueService _queueService;
 
     private String PERSON_COUNT = "PERSON_COUNT";
     private String USER_COUNT = "USER_COUNT";
@@ -78,8 +83,9 @@ public class UserServiceImpl
         if (tokens == null) {
             tokens = new JSONArray();
         }
-        assert tokens != null;
-        tokens.add(token.get("tokenId"));
+        JSONObject tokenObject = new JSONObject();
+        tokenObject.put(tokens.size() + 1, token.get("tokenId"));
+        tokens.add(tokenObject);
         if (responseObject != null) {
             responseObject.put("Authorization", token.get("tokenUid"));
         }
@@ -155,13 +161,17 @@ public class UserServiceImpl
                     JSONArray propertyArray = (JSONArray) property;
                     objectType = null;
                     JSONArray objectKeys = new JSONArray();
+                    int count = 0;
                     for (Object object : propertyArray) {
                         objectType = (String) ((JSONObject) object).get("objectName");
                         uid = processAndGetUid(jedis, objectType, (JSONObject) object);
                         //Add to Jedis
                         jedis.set(uid, ((JSONObject) object).toJSONString());
+                        _queueService.sendMessage((JSONObject) object);
                         // This is done to create link
-                        objectKeys.add(uid);
+                        JSONObject toPutInLink = new JSONObject();
+                        toPutInLink.put(count++, uid);
+                        objectKeys.add(toPutInLink);
                     }
                     userObject.put(objectType, objectKeys);
                     responseObject.put(objectType, objectKeys);
@@ -174,6 +184,7 @@ public class UserServiceImpl
 
                     uid = processAndGetUid(jedis, objectType, (JSONObject) property);
                     jedis.set(uid, ((JSONObject) property).toJSONString());
+                    _queueService.sendMessage((JSONObject) property);
                     // Creating link over here
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("objectType", objectType);
@@ -191,6 +202,7 @@ public class UserServiceImpl
             userObject.put("eTag", calculateETag(userObject));
             responseObject.put("eTag", userObject.get("eTag"));
             jedis.set((String) responseObject.get(bodyObj.get("objectName")), userObject.toJSONString());
+            _queueService.sendMessage(userObject);
             return responseObject.toJSONString();
 
         } catch (ParseException | UnsupportedEncodingException | NoSuchAlgorithmException | JsonProcessingException e) {
@@ -270,8 +282,11 @@ public class UserServiceImpl
                             String objectType = null;
                             JSONArray arrayEntries = new JSONArray();
                             JSONArray entryArray = (JSONArray) entry;
+                            int count = 0;
                             for (Object object : entryArray) {
-                                JSONObject arrayEntry = (JSONObject) parser.parse(jedis.get((String) object));
+                                count++;
+                                String key = (String) ((JSONObject) object).get(Integer.toString(count));
+                                JSONObject arrayEntry = (JSONObject) parser.parse(jedis.get(key));
                                 objectType = (String) arrayEntry.get("objectName");
                                 arrayEntries.add(arrayEntry);
                             }
@@ -354,8 +369,6 @@ public class UserServiceImpl
                 throw new BadRequestException("Can not modify objects from other entity");
             }
         }
-
-
         return Boolean.FALSE;
     }
 

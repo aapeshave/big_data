@@ -167,8 +167,11 @@ public class PersonServiceImpl
                             JSONObject jsonObject = userService.newGetUser((String) ((JSONObject) entry).get("objectValue"));
                             response.put(((JSONObject) entry).get("objectType"), jsonObject);
                         }
-                        JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
-                        response.put(((JSONObject) entry).get("objectType"), object);
+                        else
+                        {
+                            JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
+                            response.put(((JSONObject) entry).get("objectType"), object);
+                        }
                     } else if (entry instanceof JSONArray) {
                         JSONArray arrayEntries = new JSONArray();
                         JSONArray entryArray = (JSONArray) entry;
