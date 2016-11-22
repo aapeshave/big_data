@@ -369,8 +369,6 @@ public class UserServiceImpl
                 throw new BadRequestException("Can not modify objects from other entity");
             }
         }
-
-
         return Boolean.FALSE;
     }
 
