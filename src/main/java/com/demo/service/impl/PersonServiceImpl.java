@@ -4,6 +4,7 @@ package com.demo.service.impl;
 import com.demo.pojo.AccessToken;
 import com.demo.pojo.User;
 import com.demo.service.PersonService;
+import com.demo.service.QueueService;
 import com.demo.service.TokenService;
 import com.demo.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -34,6 +35,9 @@ public class PersonServiceImpl
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    QueueService queueService;
 
     @Override
     public String processAndAddPerson(String personData) {
@@ -98,6 +102,7 @@ public class PersonServiceImpl
                     JSONArray propertyArray = (JSONArray) property;
                     objectType = null;
                     JSONArray objectKeys = new JSONArray();
+                    int count = 0;
                     for (Object object : propertyArray) {
                         objectType = (String) ((JSONObject) object).get("objectName");
                         jedis.incr(objectType);
@@ -107,19 +112,25 @@ public class PersonServiceImpl
 
                         //Add to Jedis
                         jedis.set(uid, ((JSONObject) object).toJSONString());
+                        // Send object to elasticsearch
+                        queueService.sendMessage((JSONObject) object);
                         // This is done to create link
-                        objectKeys.add(uid);
+                        count++;
+                        JSONObject toPutInLink = new JSONObject();
+                        toPutInLink.put(count, uid);
+                        objectKeys.add(toPutInLink);
                     }
                     personObject.put(objectType, objectKeys);
                     responseObject.put(objectType, objectKeys);
                 } else if (property instanceof JSONObject) {
                     JSONObject jsonObject = new JSONObject();
                     objectType = (String) ((JSONObject) property).get("objectName");
-                    jsonObject.put("objectType", objectType);
+                    // jsonObject.put("objectType", objectType);
                     if (objectType.equals("user")) {
                         String userString = userService.newAddUser((JSONObject) property);
                         JSONObject userObject = (JSONObject) parser.parse(userString);
-                        jsonObject.put("objectValue", userObject.get("user"));
+                        // jsonObject.put("objectValue", userObject.get("user"));
+                        jsonObject.put("value", userObject.get("user"));
                         responseObject.put("Authorization", userObject.get("Authorization"));
                         responseObject.put(objectType, userObject.get("user"));
                         personObject.put(objectType, jsonObject);
@@ -129,8 +140,9 @@ public class PersonServiceImpl
                         ((JSONObject) property).put("_createdOn", getUnixTimestamp());
                         ((JSONObject) property).put("_id", uid);
                         jedis.set(uid, ((JSONObject) property).toJSONString());
+                        // Send object to elasticsearch
+                        queueService.sendMessage((JSONObject) property);
                         // Creating link over here
-
                         jsonObject.put("objectValue", uid);
                         personObject.put(objectType, jsonObject);
                         responseObject.put(objectType, jsonObject);
@@ -139,10 +151,11 @@ public class PersonServiceImpl
                     personObject.put(propertyKey, property);
                 }
             }
+            // Metadata is stored jedis.
             jedis.set((String) responseObject.get(bodyObj.get("objectName")), personObject.toString());
-            System.out.println("Printing personObj after adding everything:" + personObject.toString());
+            // Send Metadata to elasticsearch
+            queueService.sendMessage(personObject);
             return responseObject.toJSONString();
-
         } catch (ParseException e) {
             e.printStackTrace();
         } finally {
@@ -163,21 +176,26 @@ public class PersonServiceImpl
                 for (Object entryKey : resultObject.keySet()) {
                     Object entry = resultObject.get(entryKey);
                     if (entry instanceof JSONObject) {
-                        if (((JSONObject) entry).get("objectType").equals("user")) {
-                            JSONObject jsonObject = userService.newGetUser((String) ((JSONObject) entry).get("objectValue"));
-                            response.put(((JSONObject) entry).get("objectType"), jsonObject);
+                        String objectInfo = (String) ((JSONObject) entry).get("value");
+                        String objectType = objectInfo.split("__", 2)[0];
+                        if (objectType.equals("user")) {
+                            JSONObject jsonObject = userService.newGetUser(objectInfo);
+                            response.put(objectType, jsonObject);
                         }
                         else
                         {
                             JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
-                            response.put(((JSONObject) entry).get("objectType"), object);
+                            response.put(objectType, object);
                         }
                     } else if (entry instanceof JSONArray) {
                         JSONArray arrayEntries = new JSONArray();
                         JSONArray entryArray = (JSONArray) entry;
                         String objectType = null;
+                        int count = 0;
                         for (Object object : entryArray) {
-                            JSONObject arrayEntry = (JSONObject) parser.parse(jedis.get((String) object));
+                            count++;
+                            String key = (String) ((JSONObject) object).get(Integer.toString(count));
+                            JSONObject arrayEntry = (JSONObject) parser.parse(jedis.get(key));
                             objectType = (String) arrayEntry.get("objectName");
                             arrayEntries.add(arrayEntry);
                         }
@@ -196,14 +214,15 @@ public class PersonServiceImpl
         return null;
     }
 
+    // TODO: Complete Implementation
     @Override
     public Boolean newUpdatePerson(String personId, String parameterName, String parameterKey, String parameterValue) {
         return null;
     }
 
     private JSONObject getJSONObjectFromObject(Jedis jedis, JSONObject entry, JSONParser parser) throws ParseException {
-        JSONObject object = entry;
-        String objectString = jedis.get((String) object.get("objectValue"));
+        String key = (String) entry.get("value");
+        String objectString = jedis.get(key);
         JSONObject objectMap = (JSONObject) parser.parse(objectString);
         return objectMap;
     }
