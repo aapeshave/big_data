@@ -98,6 +98,7 @@ public class PersonServiceImpl
                     JSONArray propertyArray = (JSONArray) property;
                     objectType = null;
                     JSONArray objectKeys = new JSONArray();
+                    int count = 0;
                     for (Object object : propertyArray) {
                         objectType = (String) ((JSONObject) object).get("objectName");
                         jedis.incr(objectType);
@@ -108,7 +109,10 @@ public class PersonServiceImpl
                         //Add to Jedis
                         jedis.set(uid, ((JSONObject) object).toJSONString());
                         // This is done to create link
-                        objectKeys.add(uid);
+                        count++;
+                        JSONObject toPutInLink = new JSONObject();
+                        toPutInLink.put(count, uid);
+                        objectKeys.add(toPutInLink);
                     }
                     personObject.put(objectType, objectKeys);
                     responseObject.put(objectType, objectKeys);
@@ -176,8 +180,11 @@ public class PersonServiceImpl
                         JSONArray arrayEntries = new JSONArray();
                         JSONArray entryArray = (JSONArray) entry;
                         String objectType = null;
+                        int count = 0;
                         for (Object object : entryArray) {
-                            JSONObject arrayEntry = (JSONObject) parser.parse(jedis.get((String) object));
+                            count++;
+                            String key = (String) ((JSONObject) object).get(Integer.toString(count));
+                            JSONObject arrayEntry = (JSONObject) parser.parse(jedis.get(key));
                             objectType = (String) arrayEntry.get("objectName");
                             arrayEntries.add(arrayEntry);
                         }
@@ -196,6 +203,7 @@ public class PersonServiceImpl
         return null;
     }
 
+    // TODO: Complete Implementation
     @Override
     public Boolean newUpdatePerson(String personId, String parameterName, String parameterKey, String parameterValue) {
         return null;
