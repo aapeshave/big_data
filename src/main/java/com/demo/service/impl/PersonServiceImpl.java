@@ -125,11 +125,12 @@ public class PersonServiceImpl
                 } else if (property instanceof JSONObject) {
                     JSONObject jsonObject = new JSONObject();
                     objectType = (String) ((JSONObject) property).get("objectName");
-                    jsonObject.put("objectType", objectType);
+                    // jsonObject.put("objectType", objectType);
                     if (objectType.equals("user")) {
                         String userString = userService.newAddUser((JSONObject) property);
                         JSONObject userObject = (JSONObject) parser.parse(userString);
-                        jsonObject.put("objectValue", userObject.get("user"));
+                        // jsonObject.put("objectValue", userObject.get("user"));
+                        jsonObject.put("value", userObject.get("user"));
                         responseObject.put("Authorization", userObject.get("Authorization"));
                         responseObject.put(objectType, userObject.get("user"));
                         personObject.put(objectType, jsonObject);
@@ -175,14 +176,16 @@ public class PersonServiceImpl
                 for (Object entryKey : resultObject.keySet()) {
                     Object entry = resultObject.get(entryKey);
                     if (entry instanceof JSONObject) {
-                        if (((JSONObject) entry).get("objectType").equals("user")) {
-                            JSONObject jsonObject = userService.newGetUser((String) ((JSONObject) entry).get("objectValue"));
-                            response.put(((JSONObject) entry).get("objectType"), jsonObject);
+                        String objectInfo = (String) ((JSONObject) entry).get("value");
+                        String objectType = objectInfo.split("__", 2)[0];
+                        if (objectType.equals("user")) {
+                            JSONObject jsonObject = userService.newGetUser(objectInfo);
+                            response.put(objectType, jsonObject);
                         }
                         else
                         {
                             JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
-                            response.put(((JSONObject) entry).get("objectType"), object);
+                            response.put(objectType, object);
                         }
                     } else if (entry instanceof JSONArray) {
                         JSONArray arrayEntries = new JSONArray();
@@ -218,8 +221,8 @@ public class PersonServiceImpl
     }
 
     private JSONObject getJSONObjectFromObject(Jedis jedis, JSONObject entry, JSONParser parser) throws ParseException {
-        JSONObject object = entry;
-        String objectString = jedis.get((String) object.get("objectValue"));
+        String key = (String) entry.get("value");
+        String objectString = jedis.get(key);
         JSONObject objectMap = (JSONObject) parser.parse(objectString);
         return objectMap;
     }

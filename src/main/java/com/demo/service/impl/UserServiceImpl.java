@@ -187,8 +187,9 @@ public class UserServiceImpl
                     _queueService.sendMessage((JSONObject) property);
                     // Creating link over here
                     JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("objectType", objectType);
-                    jsonObject.put("objectValue", uid);
+                    // jsonObject.put("objectType", objectType);
+                    // jsonObject.put("objectValue", uid);
+                    jsonObject.put("value", uid);
                     userObject.put(objectType, jsonObject);
                     responseObject.put(objectType, jsonObject);
                 } else {
@@ -275,7 +276,8 @@ public class UserServiceImpl
                     for (Object entryKey : resultObject.keySet()) {
                         Object entry = resultObject.get(entryKey);
                         if (entry instanceof JSONObject) {
-                            String objectType = (String) ((JSONObject) entry).get("objectType");
+                            String objectInfo = (String) ((JSONObject) entry).get("value");
+                            String objectType =  objectInfo.split("__", 2)[0];
                             JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
                             response.put(objectType, object);
                         } else if (entry instanceof JSONArray) {
@@ -445,8 +447,8 @@ public class UserServiceImpl
     }
 
     private JSONObject getJSONObjectFromObject(Jedis jedis, JSONObject entry, JSONParser parser) throws ParseException {
-        JSONObject object = entry;
-        String objectString = jedis.get((String) object.get("objectValue"));
+        String objectInfo = (String) entry.get("value");
+        String objectString = jedis.get(objectInfo);
         JSONObject objectMap = (JSONObject) parser.parse(objectString);
         return objectMap;
     }
