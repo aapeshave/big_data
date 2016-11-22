@@ -4,6 +4,7 @@ package com.demo.service.impl;
 import com.demo.pojo.AccessToken;
 import com.demo.pojo.User;
 import com.demo.service.PersonService;
+import com.demo.service.QueueService;
 import com.demo.service.TokenService;
 import com.demo.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -34,6 +35,9 @@ public class PersonServiceImpl
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    QueueService queueService;
 
     @Override
     public String processAndAddPerson(String personData) {
@@ -108,6 +112,8 @@ public class PersonServiceImpl
 
                         //Add to Jedis
                         jedis.set(uid, ((JSONObject) object).toJSONString());
+                        // Send object to elasticsearch
+                        queueService.sendMessage((JSONObject) object);
                         // This is done to create link
                         count++;
                         JSONObject toPutInLink = new JSONObject();
@@ -133,8 +139,9 @@ public class PersonServiceImpl
                         ((JSONObject) property).put("_createdOn", getUnixTimestamp());
                         ((JSONObject) property).put("_id", uid);
                         jedis.set(uid, ((JSONObject) property).toJSONString());
+                        // Send object to elasticsearch
+                        queueService.sendMessage((JSONObject) property);
                         // Creating link over here
-
                         jsonObject.put("objectValue", uid);
                         personObject.put(objectType, jsonObject);
                         responseObject.put(objectType, jsonObject);
@@ -143,10 +150,11 @@ public class PersonServiceImpl
                     personObject.put(propertyKey, property);
                 }
             }
+            // Metadata is stored jedis.
             jedis.set((String) responseObject.get(bodyObj.get("objectName")), personObject.toString());
-            System.out.println("Printing personObj after adding everything:" + personObject.toString());
+            // Send Metadata to elasticsearch
+            queueService.sendMessage(personObject);
             return responseObject.toJSONString();
-
         } catch (ParseException e) {
             e.printStackTrace();
         } finally {
