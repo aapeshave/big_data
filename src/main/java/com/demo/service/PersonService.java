@@ -3,6 +3,8 @@ package com.demo.service;
 
 import org.elasticsearch.ResourceNotFoundException;
 
+import java.io.IOException;
+
 /**
  * CRUD Operations related to Person
  */
@@ -43,6 +45,6 @@ public interface PersonService {
      * @param parameterValue is the value that needs to be replaced
      * @return true if update is successful, otherwise return false
      */
-    Boolean newUpdatePerson(String personId, String parameterName, String parameterKey, String parameterValue);
+    Boolean newUpdatePerson(String personId, String parameterName, String parameterKey, String parameterValue) throws IOException;
 
 }

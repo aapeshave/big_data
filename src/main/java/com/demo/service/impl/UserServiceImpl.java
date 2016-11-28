@@ -277,7 +277,7 @@ public class UserServiceImpl
                         Object entry = resultObject.get(entryKey);
                         if (entry instanceof JSONObject) {
                             String objectInfo = (String) ((JSONObject) entry).get("value");
-                            String objectType =  objectInfo.split("__", 2)[0];
+                            String objectType = objectInfo.split("__", 2)[0];
                             JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
                             response.put(objectType, object);
                         } else if (entry instanceof JSONArray) {

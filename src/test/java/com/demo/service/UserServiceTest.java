@@ -42,16 +42,15 @@ public class UserServiceTest {
             "}";
 
     public static final String SAMPLE_USER_2 = "{\n" +
-            "  \"objectName\": \"user\",\n" +
-            "  \"password\": \"labore ut\",\n" +
-            "  \"userName\": \"cillum sed\",\n" +
-            "  \"role\": {\n" +
-            "  \t\"objectName\": \"role\",\n" +
-            "    \"roleId\": \"dolor mollit labore\",\n" +
-            "    \"roleName\": \"admin\"\n" +
-            "  },\n" +
-            "  \"_id\": \"dolor\",\n" +
-            "  \"createdOn\": \"ullamco in irure\"\n" +
+            "\t\"objectName\": \"user\",\n" +
+            "\t\"username\": \"aditya\",\n" +
+            "\t\"password\": \"admin\",\n" +
+            "\t\"role\":{\n" +
+            "\t\t\"objectName\": \"role\",\n" +
+            "\t\t\"roleId\": \"1\",\n" +
+            "\t\t\"roleName\": \"admin\"\n" +
+            "\t},\n" +
+            "\t\"_id\":\"786\"\n" +
             "}";
 
     @Before

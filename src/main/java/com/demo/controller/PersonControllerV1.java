@@ -102,7 +102,8 @@ public class PersonControllerV1 {
             if (_tokenService.isTokenValidated(token, personId)) {
                 String userUid = _tokenService.getUserIdFromToken(token);
                 Validate.notNull(userUid, "UserUid can not be null to do further actions");
-
+                Boolean result = _personService.newUpdatePerson(personId, parameterName, userUid, parameterValue);
+                return result.toString();
             }
         } catch (ExpiredJwtException e) {
             response.sendError(401, "Token is expired. Exception: " + e.toString());
@@ -113,8 +114,7 @@ public class PersonControllerV1 {
     }
 
     @RequestMapping(value = "/message", method = RequestMethod.POST)
-    public String postMessage(@RequestBody String message)
-    {
+    public String postMessage(@RequestBody String message) {
         _queueService.sendMessage(message);
         return null;
     }

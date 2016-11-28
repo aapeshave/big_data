@@ -8,16 +8,21 @@ import com.demo.service.QueueService;
 import com.demo.service.TokenService;
 import com.demo.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.ResourceNotFoundException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +43,8 @@ public class PersonServiceImpl
 
     @Autowired
     QueueService queueService;
+
+    Jedis jedisConnectiion = new Jedis("localhost");
 
     @Override
     public String processAndAddPerson(String personData) {
@@ -181,9 +188,7 @@ public class PersonServiceImpl
                         if (objectType.equals("user")) {
                             JSONObject jsonObject = userService.newGetUser(objectInfo);
                             response.put(objectType, jsonObject);
-                        }
-                        else
-                        {
+                        } else {
                             JSONObject object = getJSONObjectFromObject(jedis, (JSONObject) entry, parser);
                             response.put(objectType, object);
                         }
@@ -214,9 +219,47 @@ public class PersonServiceImpl
         return null;
     }
 
-    // TODO: Complete Implementation
     @Override
-    public Boolean newUpdatePerson(String personId, String parameterName, String parameterKey, String parameterValue) {
+    public Boolean newUpdatePerson(String personId, String parameterName, String parameterKey, String parameterValue) throws IOException {
+        String personString = v1GetPerson(personId);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode personNode = mapper.readTree(personString);
+        Assert.assertNotNull(personNode);
+
+        JsonNode parentNode = personNode.findParent(parameterName);
+        Validate.notNull(parentNode);
+
+        String parameterValueTemp = mapper.writeValueAsString(parameterValue);
+        try {
+            Object parameterValueObject = new JSONParser().parse(parameterValueTemp);
+            if (parameterValueObject instanceof String) {
+                System.out.println("String found");
+                JsonNode id = parentNode.get("_id");
+                Assert.assertNotNull(id);
+                String objectToBeUpdated = jedisConnectiion.get(id.asText());
+                if (!StringUtils.isBlank(objectToBeUpdated)) {
+                    JSONObject toChange = (JSONObject) new JSONParser().parse(objectToBeUpdated);
+                    toChange.remove(parameterName);
+                    toChange.put(parameterName, parameterValue);
+                    toChange.put("_modifiedOn", getUnixTimestamp());
+                    System.out.println(toChange.toJSONString());
+                    jedisConnectiion.set(id.asText(), toChange.toJSONString());
+
+                    JSONObject personObject = (JSONObject) new JSONParser().parse(jedisConnectiion.get(personId));
+                    Assert.assertNotNull(personObject);
+                    personObject.put("_modifiedOn", getUnixTimestamp());
+                    jedisConnectiion.set((String) personObject.get("_id"), personObject.toJSONString());
+
+                    return Boolean.TRUE;
+                }
+            } else if (parameterValueObject instanceof JSONObject) {
+                System.out.println("Object Found");
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+
         return null;
     }
 

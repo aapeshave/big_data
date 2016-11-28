@@ -160,7 +160,7 @@ public class SchemaServiceImpl implements SchemaService {
         if (!StringUtils.isBlank(parentSchemaString)) {
             try {
                 JSONObject parentSchemaObject = (JSONObject) new JSONParser().parse(parentSchemaString);
-                int i = 0;
+                return parentSchemaObject.toJSONString();
             } catch (ParseException e) {
                 e.printStackTrace();
             }
