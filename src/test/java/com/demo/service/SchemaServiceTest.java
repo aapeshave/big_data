@@ -4,18 +4,15 @@ import com.demo.service.impl.SchemaServiceImpl;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by ajinkya on 11/5/16.
  */
 public class SchemaServiceTest {
-
+    SchemaServiceImpl schemaService;
     public static final String TEST_SCHEMA_DATA = "{\n" +
             "  \"objectName\": \"dolore exercitation enim\",\n" +
             "  \"sampleObject\": {\n" +
@@ -34,7 +31,6 @@ public class SchemaServiceTest {
             "    \"attribute\": \"ONe\"\n" +
             "  }\n" +
             "}";
-    SchemaServiceImpl schemaService;
 
     public static final String SCHEMA__USER = "{\n" +
             "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
@@ -186,8 +182,7 @@ public class SchemaServiceTest {
             "}";
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         schemaService = new SchemaServiceImpl();
     }
 
@@ -199,16 +194,15 @@ public class SchemaServiceTest {
     @Test
     public void testValidateSchemaWithValidUser() throws Exception {
         String pathToSchema = "SCHEMA__user";
-        String sampleUser =  SAMPLE_USER_BODY;
+        String sampleUser = SAMPLE_USER_BODY;
         Boolean isSchemaValidated = schemaService.validateSchema(pathToSchema, sampleUser);
         Assert.assertTrue(isSchemaValidated);
     }
 
     @Test
-    public void testValidateSchemaWithInvalidUser() throws Exception
-    {
+    public void testValidateSchemaWithInvalidUser() throws Exception {
         String pathToSchema = "SCHEMA__user";
-        String sampleInvalidUserBody =  SAMPLE_INVALID_USER_BODY;
+        String sampleInvalidUserBody = SAMPLE_INVALID_USER_BODY;
         Boolean isSchemaValidated = schemaService.validateSchema(pathToSchema, sampleInvalidUserBody);
         Assert.assertTrue(isSchemaValidated);
     }

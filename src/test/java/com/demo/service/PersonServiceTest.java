@@ -4,8 +4,6 @@ import com.demo.service.impl.PersonServiceImpl;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class PersonServiceTest {
     PersonServiceImpl personService;
 
@@ -29,4 +27,13 @@ public class PersonServiceTest {
 
     }
 
+    @Test
+    public void testNewUpdatePerson() throws Exception {
+        String personUid = "person__21";
+        String parameterName = "username";
+        String parameterValue = "aapeshave";
+        String parameterKey = "user__43";
+        Boolean result = personService.newUpdatePerson(personUid, parameterName, parameterKey, parameterValue);
+        int i =0;
+    }
 }
