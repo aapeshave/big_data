@@ -1,9 +1,11 @@
 package com.demo.controller;
 
+import com.demo.service.PlanService;
 import com.demo.service.SchemaService;
 import com.demo.service.TokenService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -36,6 +38,9 @@ public class PlanController {
     @Autowired
     SchemaService _schemaService;
 
+    @Autowired
+    PlanService _planService;
+
     @RequestMapping(method = RequestMethod.POST)
     @ResponseBody
     public String newGetUser(@RequestHeader(required = true) String token,
@@ -45,14 +50,17 @@ public class PlanController {
             if (_tokenService.isTokenValidated(token, "SampleString")) {
                 String userUid = _tokenService.getUserIdFromToken(token);
                 Validate.notNull(userUid, "UserUid can not be null to do further actions");
-                System.out.println("Found user: " + userUid);
                 String pathToSchema = "SCHEMA__" + getPathToSchema(planBody);
                 if (_schemaService.validateSchema(pathToSchema, planBody))
                 {
-                    System.out.println("SCHEMA VALIDATION FINISHED");
                     ObjectMapper mapper = new ObjectMapper();
                     JsonNode planNode = mapper.readTree(planBody);
-                    return planNode.asText();
+                    ((ObjectNode) planNode).put("userUid", userUid);
+                    String result = _planService.addPlan(planNode);
+                    return result;
+                }
+                else {
+                    response.sendError(401, "Schema not found.");
                 }
             }
         } catch (ExpiredJwtException e) {
