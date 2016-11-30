@@ -112,7 +112,9 @@ public class QueueServiceImpl
             assert url != null;
             try {
                 HttpPost postRequest = new HttpPost(url.toURI());
+                Validate.notNull(postRequest);
                 StringEntity entity = new StringEntity(jsonObject.toJSONString(), ContentType.APPLICATION_JSON);
+                Validate.notNull(entity, "Entity can not be empty");
                 postRequest.setEntity(entity);
                 CloseableHttpResponse httpResponse = httpClient.execute(postRequest);
                 System.out.print(httpResponse.toString());
