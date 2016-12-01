@@ -11,24 +11,16 @@ import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
@@ -53,6 +45,26 @@ public class PlanController {
 
     @ResponseBody
     @RequestMapping(method = RequestMethod.POST)
+    @ApiOperation(value = "Create a plan with benefits",
+            notes = "Note: You need to provide authentication token",
+            response = PlanAggregate.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 401,
+                    message = "customer not authorized to make api call",
+                    responseHeaders = @ResponseHeader(
+                            name = "UNAUTHORIZED",
+                            description = "customer not authorized to make api call")),
+            @ApiResponse(code = 400,
+                    message = "Bad Request",
+                    responseHeaders = @ResponseHeader(
+                            name = "BAD_REQUEST",
+                            description = "bad request")),
+            @ApiResponse(code = 500,
+                    message = "Internal Server Error",
+                    responseHeaders = @ResponseHeader(
+                            name = "GENERAL_ERROR",
+                            description = "unhandled exception occured"))
+    })
     public PlanAggregate newGetUser(
             @ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
             @RequestHeader(required = true) String token,

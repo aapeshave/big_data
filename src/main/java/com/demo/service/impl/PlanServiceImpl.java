@@ -5,7 +5,6 @@ import com.demo.service.QueueService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -17,7 +16,10 @@ import redis.clients.jedis.Jedis;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Created by ajinkyapeshave on 11/30/16.
@@ -30,27 +32,22 @@ public class PlanServiceImpl implements PlanService {
 
     @Autowired
     QueueService _queueService;
+
     @Override
     public String addPlan(JsonNode planNode) {
-        if (planNode.has("userUid"))
-        {
+        if (planNode.has("userUid")) {
             JSONObject responseMap = new JSONObject();
             Iterator<String> objectIterator = planNode.fieldNames();
-            while (objectIterator.hasNext())
-            {
+            while (objectIterator.hasNext()) {
                 String key = objectIterator.next();
                 JsonNode entry = planNode.get(key);
-                if (entry instanceof TextNode)
-                {
+                if (entry instanceof TextNode) {
                     responseMap.put(key, entry);
-                }
-                else if (entry instanceof ArrayNode)
-                {
+                } else if (entry instanceof ArrayNode) {
                     Map<Integer, String> arrayMap = new HashMap<>();
                     Integer numberOfObjects = 0;
                     String objectType = null;
-                    for (JsonNode entryInArray : entry)
-                    {
+                    for (JsonNode entryInArray : entry) {
                         numberOfObjects++;
                         try {
                             String uid = processJsonObject(entryInArray);
@@ -62,9 +59,7 @@ public class PlanServiceImpl implements PlanService {
                         Validate.notNull(objectType);
                         responseMap.put(objectType, arrayMap);
                     }
-                }
-                else if (entry != null)
-                {
+                } else if (entry != null) {
                     try {
                         String uid = processJsonObject(entry);
                         String objectType = uid.split("__")[0];
