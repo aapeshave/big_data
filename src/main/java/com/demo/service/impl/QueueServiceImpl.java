@@ -66,6 +66,7 @@ public class QueueServiceImpl
 
     private URL getURL(JSONObject jsonObject) {
         String id = (String) jsonObject.get("_id");
+        Validate.notNull(id);
         String objectName = id.split("__", 2)[0];
         String key = id.split("__", 2)[1];
         Validate.notEmpty(objectName);
