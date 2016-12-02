@@ -27,7 +27,7 @@ public class SwaggerConfiguration {
     private ApiInfo getApiInfo() {
         return new ApiInfo(
                 "Swagger Api Documentation",
-                "This is sample api documentation for prototype big data class",
+                "This is api documentation for prototype of big data class",
                 "Beta",
                 "https://github.com/aapeshave/big_data",
                 contact(),

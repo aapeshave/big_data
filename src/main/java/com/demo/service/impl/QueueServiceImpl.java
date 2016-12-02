@@ -66,6 +66,7 @@ public class QueueServiceImpl
 
     private URL getURL(JSONObject jsonObject) {
         String id = (String) jsonObject.get("_id");
+        Validate.notNull(id);
         String objectName = id.split("__", 2)[0];
         String key = id.split("__", 2)[1];
         Validate.notEmpty(objectName);
@@ -112,7 +113,9 @@ public class QueueServiceImpl
             assert url != null;
             try {
                 HttpPost postRequest = new HttpPost(url.toURI());
+                Validate.notNull(postRequest);
                 StringEntity entity = new StringEntity(jsonObject.toJSONString(), ContentType.APPLICATION_JSON);
+                Validate.notNull(entity, "Entity can not be empty");
                 postRequest.setEntity(entity);
                 CloseableHttpResponse httpResponse = httpClient.execute(postRequest);
                 System.out.print(httpResponse.toString());

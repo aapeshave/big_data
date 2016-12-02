@@ -97,6 +97,7 @@ public class TokenServiceImpl
                 .setIssuer(ISSUER)
                 .claim("user", userUid)
                 .claim("url", URL)
+                .claim("role", role)
                 .signWith(signatureAlgorithm, signingKey);
 
         builder.setExpiration(getNextYearDate());
