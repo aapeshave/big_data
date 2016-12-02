@@ -131,8 +131,9 @@ public class PlanServiceImpl implements PlanService {
             } catch (ParseException e) {
                 throw new InternalError("Parsing failed.");
             }
+        } else {
+            throw new ResourceNotFoundException("Can not locate plan with uid: " + planUid);
         }
-        return null;
     }
 
     private String processJsonObject(JsonNode incomingNode) throws ParseException {

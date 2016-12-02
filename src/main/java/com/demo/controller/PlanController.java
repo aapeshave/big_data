@@ -119,9 +119,23 @@ public class PlanController {
             HttpServletRequest request) throws IOException {
         try {
             if (_tokenService.isTokenValidated(token, "SampleString")) {
-                JSONObject plan = _planService.getPlan(planUid);
-                Validate.notNull(plan);
-                return plan.toJSONString();
+                JSONObject plan = null;
+                try {
+                    plan = _planService.getPlan(planUid);
+                    Validate.notNull(plan);
+                    String eTag = request.getHeader("If-None-Match");
+                    if (StringUtils.isNotBlank(eTag)) {
+                        String eTagFromObject = (String) plan.get("ETag");
+                        if (StringUtils.isNotEmpty(eTagFromObject)) {
+                            if (StringUtils.equals(eTagFromObject, eTag)) {
+                                response.sendError(304, "Object is not modified");
+                            }
+                        }
+                    }
+                    return plan.toJSONString();
+                } catch (ResourceNotFoundException e) {
+                    response.sendError(404, e.toString());
+                }
             }
         } catch (ExpiredJwtException e) {
             response.sendError(401, "Token is expired. Exception: " + e.toString());
