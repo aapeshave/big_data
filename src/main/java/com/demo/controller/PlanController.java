@@ -14,6 +14,7 @@ import io.jsonwebtoken.SignatureException;
 import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.elasticsearch.ResourceNotFoundException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
@@ -65,7 +67,7 @@ public class PlanController {
                             name = "GENERAL_ERROR",
                             description = "unhandled exception occured"))
     })
-    public PlanAggregate newGetUser(
+    public PlanAggregate createPlan(
             @ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
             @RequestHeader(required = true) String token,
             @ApiParam(value = "JSON Body for plan. Refer to Schemas for more info")
@@ -101,6 +103,30 @@ public class PlanController {
             response.sendError(401, "Token is malformed. Exception: " + e.toString());
         } catch (ProcessingException e) {
             response.sendError(500, "Failed While Processing Schema");
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @RequestMapping(value = "/{uid}", method = RequestMethod.GET)
+    @ResponseBody
+    public String getPlan(
+            @ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
+            @RequestHeader(required = true) String token,
+            @PathVariable("uid") String planUid,
+            HttpServletResponse response,
+            HttpServletRequest request) throws IOException {
+        try {
+            if (_tokenService.isTokenValidated(token, "SampleString")) {
+                JSONObject plan = _planService.getPlan(planUid);
+                Validate.notNull(plan);
+                return plan.toJSONString();
+            }
+        } catch (ExpiredJwtException e) {
+            response.sendError(401, "Token is expired. Exception: " + e.toString());
+        } catch (SignatureException | MalformedJwtException e) {
+            response.sendError(401, "Token is malformed. Exception: " + e.toString());
         } catch (ParseException e) {
             e.printStackTrace();
         }
