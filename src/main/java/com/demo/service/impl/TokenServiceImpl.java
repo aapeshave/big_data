@@ -3,6 +3,7 @@ package com.demo.service.impl;
 import com.demo.controller.AccessTokenController;
 import com.demo.pojo.AccessToken;
 import com.demo.service.TokenService;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -50,8 +51,8 @@ public class TokenServiceImpl
             claims = Jwts.parser()
                     .setSigningKey(DatatypeConverter.parseBase64Binary(API_SECRET))
                     .parseClaimsJws(tokenBody).getBody();
-            log.debug("Token validated for user: " + claims.get("user"));
-            log.info("Token Validation Finished");
+            log.info("Token validated for user: " + claims.get("user"));
+            log.debug("Token Validation Finished");
             return Boolean.TRUE;
         } catch (UnsupportedJwtException e) {
             log.error(e);
@@ -120,6 +121,29 @@ public class TokenServiceImpl
         ObjectMapper mapper = new ObjectMapper();
         JSONParser parser = new JSONParser();
         return (JSONObject) parser.parse(mapper.writeValueAsString(accessToken));
+    }
+
+    @Override
+    public TokenInfo getTokenInfo(String token) {
+        Claims claims;
+        try {
+            claims = Jwts.parser()
+                    .setSigningKey(DatatypeConverter.parseBase64Binary(API_SECRET))
+                    .parseClaimsJws(token).getBody();
+            TokenInfo tokenInfo = new TokenInfo();
+            tokenInfo.userUid = (String) claims.get("user");
+            tokenInfo.role = (String) claims.get("role");
+            tokenInfo.issuer = ISSUER;
+            tokenInfo.tokenId = token;
+            tokenInfo.tokenUid = claims.getId();
+            return tokenInfo;
+        } catch (UnsupportedJwtException e) {
+            log.error(e);
+            throw new UnsupportedJwtException("Getting userId from token failed. Unsupported JWT");
+        } catch (IllegalArgumentException e) {
+            log.error(e);
+            throw new IllegalArgumentException("Failed while getting userId from token. Illegal argument exception");
+        }
     }
 
     private Date getNextYearDate() {
