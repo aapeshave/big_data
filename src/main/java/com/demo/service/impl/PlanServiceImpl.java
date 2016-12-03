@@ -179,6 +179,44 @@ public class PlanServiceImpl implements PlanService {
         }
     }
 
+    @Override
+    public JSONObject patchBenefitOfThePlan(String planKey, JSONObject benefitObject, JSONObject dataToBePatched) throws ParseException {
+        System.out.println(benefitObject.toJSONString());
+        for (Object key : dataToBePatched.keySet())
+        {
+            Object entry = dataToBePatched.get(key);
+            if (benefitObject.containsKey(key))
+            {
+                if (entry instanceof String)
+                {
+                    benefitObject.replace(key, entry);
+                }
+            }
+            else
+            {
+                benefitObject.put(key, entry);
+            }
+        }
+        benefitObject.put("_modifiedOn", getUnixTimestamp());
+        String benefitUid = (String) benefitObject.get("_id");
+        jedisConnection.set(benefitUid, benefitObject.toJSONString());
+        _queueService.sendMessage(benefitObject);
+
+        String planString = jedisConnection.get(planKey);
+        JSONObject planObject = (JSONObject) new JSONParser().parse(planString);
+
+        planObject.put("_modifiedOn", getUnixTimestamp());
+        try {
+            planObject.replace("ETag", calculateETag(planObject));
+            String planUid = (String) planObject.get("_id");
+            jedisConnection.set(planUid, planObject.toJSONString());
+            _queueService.sendMessage(planObject);
+        } catch (NoSuchAlgorithmException | ParseException | UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return planObject;
+    }
+
     private String processJsonObject(JsonNode incomingNode) throws ParseException {
         JSONParser parser = new JSONParser();
         JSONObject toPersist = (JSONObject) parser.parse(incomingNode.toString());

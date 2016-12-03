@@ -1,12 +1,11 @@
 package com.demo.controller;
 
 
+import com.demo.service.TokenService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.jsonwebtoken.*;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletResponse;
@@ -21,6 +20,10 @@ import java.util.Date;
 @RestController
 @RequestMapping("/access_token")
 public class AccessTokenController {
+
+    @Autowired
+    TokenService _tokenService;
+
     private static final String API_SECRET = "aap1212";
 
     @POST
@@ -45,6 +48,20 @@ public class AccessTokenController {
 
         //TODO: You can add more claims
         return builder.compact();
+    }
+
+    @POST
+    @RequestMapping("/new")
+    public String createTokenForUser(@RequestHeader String token,
+                                     @RequestParam String roleName,
+                                     @RequestParam String subject,
+                                     HttpServletResponse response) throws IOException {
+        try {
+            response.sendError(405, "Method not Implemented");
+        } catch (ExpiredJwtException | SignatureException | MalformedJwtException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @GET

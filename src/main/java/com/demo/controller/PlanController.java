@@ -15,6 +15,7 @@ import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.elasticsearch.ResourceNotFoundException;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by ajinkya on 11/28/16.
@@ -109,8 +112,8 @@ public class PlanController {
         return null;
     }
 
-    @RequestMapping(value = "/{uid}", method = RequestMethod.GET)
     @ResponseBody
+    @RequestMapping(value = "/{uid}", method = RequestMethod.GET)
     public String getPlan(
             @ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
             @RequestHeader(required = true) String token,
@@ -191,6 +194,75 @@ public class PlanController {
             response.sendError(401, "Bad Schema. Please check schema or add ObjectName field in the payload. More Info: " + e.toString());
         } catch (ParseException e) {
             e.printStackTrace();
+        }
+        return null;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/search", method = RequestMethod.GET)
+    public String getPlanUsingParameters()
+    {
+        return null;
+    }
+
+
+    @ResponseBody
+    @RequestMapping(value = "/{uid}/benefit/{benefitUid}", method = RequestMethod.PATCH)
+    public PlanAggregate patchBenefit(@ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
+                                          @RequestHeader(required = true) String token,
+                                      @ApiParam(value = "Uid of the plan for which benefit to be added")
+                                          @PathVariable("uid") String planUid,
+                                      HttpServletResponse response,
+                                      @ApiParam(value = "Uid of the benefit for which benefit to be added")
+                                      @PathVariable("benefitUid") String benefitUid,
+                                      @ApiParam(value = "Body to be patched")
+                                      @RequestBody String benefitData) throws IOException {
+        try {
+            if (_tokenService.isTokenValidated(token, "Sample String"))
+            {
+                TokenService.TokenInfo tokenInfo = _tokenService.getTokenInfo(token);
+                Validate.notNull(tokenInfo);
+                Integer flag = 0 ;
+                if (StringUtils.isNotBlank(tokenInfo.role) && StringUtils.equals("admin", tokenInfo.role))
+                {
+                    JSONObject plan = null;
+                    try {
+                        plan = _planService.getPlan(planUid);
+                        Validate.notNull(plan);
+                        List<JSONObject> benefits = (ArrayList<JSONObject>) plan.get("benefit");
+                        Validate.notNull(benefits);
+                        for (JSONObject object : benefits)
+                        {
+                            if (object.containsValue(benefitUid))
+                            {
+                                JSONObject objectToBePatched = (JSONObject) new JSONParser().parse(benefitData);
+                                JSONObject result = _planService.patchBenefitOfThePlan(planUid, object, objectToBePatched);
+                                Validate.notNull(result);
+                                PlanAggregate responseObject = new PlanAggregate();
+                                responseObject._id = (String) result.get("_id");
+                                responseObject._objectInfo = result;
+                                flag =1 ;
+                                return responseObject;
+                            }
+                        }
+                        if (flag == 0)
+                        {
+                            response.sendError(404, "Benefit not found");
+                        }
+                    } catch (ResourceNotFoundException e) {
+                        response.sendError(404, "Plan not found");
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else {
+                    response.sendError(403, "Admin role is needed to perform this action. Consider getting an admin token");
+                }
+            }
+        } catch (ExpiredJwtException e) {
+            response.sendError(401, "Token is expired. Exception: " + e.toString());
+        } catch (SignatureException | MalformedJwtException e) {
+            response.sendError(401, "Token is malformed. Exception: " + e.toString());
         }
         return null;
     }
