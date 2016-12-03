@@ -4,6 +4,7 @@ import com.demo.service.SchemaService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,12 +60,13 @@ public class SchemaController {
         return Boolean.FALSE;
     }
 
-    // TODO: Implementation is not done
+
     @RequestMapping(value = "/{uuid}", method = RequestMethod.PATCH)
     public String updateSchema(@PathVariable("uuid") String schemaPath,
-                               @RequestParam String propertyName,
-                               @RequestParam String value) {
-        System.out.println("schemaPAth: " + schemaPath + "property Name: " + propertyName);
-        return null;
+                               @RequestBody String body,
+                               @RequestParam String parameterName) throws ParseException {
+        JSONObject bodyObject = (JSONObject) new JSONParser().parse(body);
+        String patchSchema = schemaService.patchSchema(schemaPath, bodyObject, parameterName);
+        return patchSchema;
     }
 }

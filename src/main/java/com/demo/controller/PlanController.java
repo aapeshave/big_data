@@ -117,7 +117,7 @@ public class PlanController {
         } catch (SignatureException | MalformedJwtException e) {
             response.sendError(401, "Token is malformed. Exception: " + e.toString());
         } catch (ProcessingException e) {
-            response.sendError(500, "Failed While Processing Schema");
+            response.sendError(500, "Failed While Processing Schema. Report: " + e.toString());
         } catch (ParseException e) {
             e.printStackTrace();
         }
