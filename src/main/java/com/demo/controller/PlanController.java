@@ -37,6 +37,19 @@ import java.util.List;
 @RequestMapping("/plan")
 public class PlanController {
 
+    public static final String SAMPLE_PLAN_BODY = "{\n" +
+            "  \"totalPrice\": \"786\",\n" +
+            "  \"objectName\": \"plan\",\n" +
+            "  \"benefits\": [\n" +
+            "    {\n" +
+            "      \"price\": \"786\",\n" +
+            "      \"name\": \"Gold Plan\",\n" +
+            "      \"objectName\": \"benefit\",\n" +
+            "      \"description\": \"It is very good plan\"\n" +
+            "    }\n" +
+            "  ],\n" +
+            "  \"startDate\": \"12/01/2016\"\n" +
+            "}";
     @Autowired
     TokenService _tokenService;
 
@@ -67,12 +80,12 @@ public class PlanController {
                     message = "Internal Server Error",
                     responseHeaders = @ResponseHeader(
                             name = "GENERAL_ERROR",
-                            description = "unhandled exception occured"))
+                            description = "unhandled exception occurred"))
     })
     public PlanAggregate createPlan(
             @ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
             @RequestHeader(required = true) String token,
-            @ApiParam(value = "JSON Body for plan. Refer to Schemas for more info")
+            @ApiParam(value = "JSON Body for plan. Refer to Schemas for more info", defaultValue = SAMPLE_PLAN_BODY)
             @RequestBody String planBody,
             HttpServletResponse response) throws IOException {
         try {
@@ -113,6 +126,7 @@ public class PlanController {
 
     @ResponseBody
     @RequestMapping(value = "/{uid}", method = RequestMethod.GET)
+    @ApiOperation(value = "Get a  plan related to user")
     public String getPlan(
             @ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
             @RequestHeader(required = true) String token,
@@ -151,6 +165,7 @@ public class PlanController {
 
     @ResponseBody
     @RequestMapping(value = "/{uid}/benefit", method = RequestMethod.PUT)
+    @ApiOperation(value = "Add benefit to a plan", response = PlanAggregate.class, notes = "Authorization token is need. Role Supported Admin")
     public PlanAggregate addBenefitToPlan(@ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
                                           @RequestHeader(required = true) String token,
                                           @ApiParam(value = "Uid of the plan for which benefit to be added")
@@ -194,12 +209,14 @@ public class PlanController {
 
     @ResponseBody
     @RequestMapping(value = "/search", method = RequestMethod.GET)
-    public String getPlanUsingParameters() {
+    public String getPlanUsingParameters(HttpServletResponse response) throws IOException {
+        response.sendError(405, "Method not supported");
         return null;
     }
 
 
     @ResponseBody
+    @ApiOperation(value = "Patch benefit object related to a plan", response = PlanAggregate.class, nickname = "Patch Benefit")
     @RequestMapping(value = "/{uid}/benefit/{benefitUid}", method = RequestMethod.PATCH)
     public PlanAggregate patchBenefit(@ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
                                       @RequestHeader(required = true) String token,
@@ -256,6 +273,7 @@ public class PlanController {
 
     @ResponseBody
     @RequestMapping(value = "/{uid}", method = RequestMethod.DELETE)
+    @ApiOperation(value = "Delete plan related to user", response = Boolean.class, notes = "Authorization token is need. Role Supported Admin")
     public Boolean deletePlan(@ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
                               @RequestHeader(required = true) String token,
                               @PathVariable("uid") String planUid,
