@@ -22,10 +22,23 @@ public interface PlanService {
     JSONObject getPlan(String planUid) throws ResourceNotFoundException, ParseException;
 
     /**
-     *
      * @param benefitObject to be added
      * @param planUid
      * @return plan object
      */
     JSONObject addBenefitToPlan(String benefitObject, String planUid) throws ResourceNotFoundException, ParseException;
+
+    /**
+     * @param planKey         Found plan object in the database
+     * @param benefitObject   Object to be replaced in the database
+     * @param dataToBePatched
+     * @return plan object
+     */
+    JSONObject patchBenefitOfThePlan(String planKey, JSONObject benefitObject, JSONObject dataToBePatched) throws ParseException;
+
+    /**
+     * @param planKey key of the plan to be deleted
+     * @return true if deleted
+     */
+    Boolean deletePlan(String planKey) throws ResourceNotFoundException;
 }

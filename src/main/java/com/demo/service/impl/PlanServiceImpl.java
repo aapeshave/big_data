@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by ajinkyapeshave on 11/30/16.
@@ -31,10 +33,9 @@ import java.util.Iterator;
 public class PlanServiceImpl implements PlanService {
 
 
-    private Jedis jedisConnection = new Jedis();
-
     @Autowired
     QueueService _queueService;
+    private Jedis jedisConnection = new Jedis();
 
     @Override
     public String addPlan(JsonNode planNode) {
@@ -139,8 +140,7 @@ public class PlanServiceImpl implements PlanService {
     @Override
     public JSONObject addBenefitToPlan(String benefitObject, String planUid) throws ResourceNotFoundException, ParseException {
         String stringFromDb = jedisConnection.get(planUid);
-        if (StringUtils.isNotBlank(stringFromDb))
-        {
+        if (StringUtils.isNotBlank(stringFromDb)) {
             JSONParser parser = new JSONParser();
             JSONObject plan = (JSONObject) parser.parse(stringFromDb);
             JSONArray benefits = (JSONArray) plan.get("benefit");
@@ -154,7 +154,7 @@ public class PlanServiceImpl implements PlanService {
                 JsonNode jsonNode = mapper.readTree(benefitObject);
                 String benefitUid = processJsonObject(jsonNode);
                 JSONObject toPutInArray = new JSONObject();
-                toPutInArray.put((benefits.size()+1), benefitUid);
+                toPutInArray.put((benefits.size() + 1), benefitUid);
 
                 benefits.add(toPutInArray);
 
@@ -169,14 +169,74 @@ public class PlanServiceImpl implements PlanService {
             } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-            jedisConnection.set( (String) plan.get("_id"), plan.toJSONString());
+            jedisConnection.set((String) plan.get("_id"), plan.toJSONString());
             _queueService.sendMessage(plan);
             return plan;
-        }
-        else
-        {
+        } else {
             throw new ResourceNotFoundException("Can not locate plan with uid: " + planUid);
         }
+    }
+
+    @Override
+    public JSONObject patchBenefitOfThePlan(String planKey, JSONObject benefitObject, JSONObject dataToBePatched) throws ParseException {
+        System.out.println(benefitObject.toJSONString());
+        for (Object key : dataToBePatched.keySet()) {
+            Object entry = dataToBePatched.get(key);
+            if (benefitObject.containsKey(key)) {
+                if (entry instanceof String) {
+                    benefitObject.replace(key, entry);
+                }
+            } else {
+                benefitObject.put(key, entry);
+            }
+        }
+        benefitObject.put("_modifiedOn", getUnixTimestamp());
+        String benefitUid = (String) benefitObject.get("_id");
+        jedisConnection.set(benefitUid, benefitObject.toJSONString());
+        _queueService.sendMessage(benefitObject);
+
+        String planString = jedisConnection.get(planKey);
+        JSONObject planObject = (JSONObject) new JSONParser().parse(planString);
+
+        planObject.put("_modifiedOn", getUnixTimestamp());
+        try {
+            planObject.replace("ETag", calculateETag(planObject));
+            String planUid = (String) planObject.get("_id");
+            jedisConnection.set(planUid, planObject.toJSONString());
+            _queueService.sendMessage(planObject);
+        } catch (NoSuchAlgorithmException | ParseException | UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return planObject;
+    }
+
+    @Override
+    public Boolean deletePlan(String planKey) throws ResourceNotFoundException {
+        String planString = jedisConnection.get(planKey);
+        if (StringUtils.isNotBlank(planString)) {
+            JSONParser parser = new JSONParser();
+            try {
+                JSONObject plan = (JSONObject) parser.parse(planString);
+                List<JSONObject> benefits = (ArrayList<JSONObject>) plan.get("benefit");
+                int count = 0;
+                for (JSONObject benefit : benefits) {
+                    count++;
+                    String benefitkey = (String) benefit.get(Integer.toString(count));
+                    jedisConnection.del(benefitkey);
+                }
+
+                System.out.println("Deleting Plan: " + planKey);
+                Long del = jedisConnection.del(planKey);
+                if (del > 0) {
+                    return Boolean.TRUE;
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        } else {
+            throw new ResourceNotFoundException("Can not locate plan");
+        }
+        return Boolean.FALSE;
     }
 
     private String processJsonObject(JsonNode incomingNode) throws ParseException {
