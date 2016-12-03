@@ -3,6 +3,7 @@ package com.demo.service.impl;
 import com.demo.service.PlanService;
 import com.demo.service.QueueService;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.commons.lang3.StringUtils;
@@ -16,13 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Created by ajinkyapeshave on 11/30/16.
@@ -132,6 +132,49 @@ public class PlanServiceImpl implements PlanService {
                 throw new InternalError("Parsing failed.");
             }
         } else {
+            throw new ResourceNotFoundException("Can not locate plan with uid: " + planUid);
+        }
+    }
+
+    @Override
+    public JSONObject addBenefitToPlan(String benefitObject, String planUid) throws ResourceNotFoundException, ParseException {
+        String stringFromDb = jedisConnection.get(planUid);
+        if (StringUtils.isNotBlank(stringFromDb))
+        {
+            JSONParser parser = new JSONParser();
+            JSONObject plan = (JSONObject) parser.parse(stringFromDb);
+            JSONArray benefits = (JSONArray) plan.get("benefit");
+
+            plan.remove("benefit");
+            plan.remove("ETag");
+
+
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                JsonNode jsonNode = mapper.readTree(benefitObject);
+                String benefitUid = processJsonObject(jsonNode);
+                JSONObject toPutInArray = new JSONObject();
+                toPutInArray.put((benefits.size()+1), benefitUid);
+
+                benefits.add(toPutInArray);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            plan.put("benefit", benefits);
+            plan.put("_modifiedOn", getUnixTimestamp());
+            try {
+                plan.put("ETag", calculateETag(plan));
+            } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            jedisConnection.set( (String) plan.get("_id"), plan.toJSONString());
+            _queueService.sendMessage(plan);
+            return plan;
+        }
+        else
+        {
             throw new ResourceNotFoundException("Can not locate plan with uid: " + planUid);
         }
     }

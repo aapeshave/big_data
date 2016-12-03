@@ -20,4 +20,12 @@ public interface PlanService {
      * @return the plan associated with the uid
      */
     JSONObject getPlan(String planUid) throws ResourceNotFoundException, ParseException;
+
+    /**
+     *
+     * @param benefitObject to be added
+     * @param planUid
+     * @return plan object
+     */
+    JSONObject addBenefitToPlan(String benefitObject, String planUid) throws ResourceNotFoundException, ParseException;
 }

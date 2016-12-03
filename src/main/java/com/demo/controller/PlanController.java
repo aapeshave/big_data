@@ -147,6 +147,54 @@ public class PlanController {
         return null;
     }
 
+    @ResponseBody
+    @RequestMapping(value = "/{uid}/benefit", method = RequestMethod.PUT)
+    public PlanAggregate addBenefitToPlan(@ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
+                                    @RequestHeader(required = true) String token,
+                                    @ApiParam(value = "Uid of the plan for which benefit to be added")
+                                    @PathVariable("uid") String planUid,
+                                    @ApiParam(value = "JSON Body for benefit. Refer to Schemas for more info")
+                                    @RequestBody String benefitBody,
+                                    HttpServletResponse response) throws IOException {
+        try {
+            if (_tokenService.isTokenValidated(token, "Sample String"))
+            {
+                TokenService.TokenInfo tokenInfo = _tokenService.getTokenInfo(token);
+                Validate.notNull(tokenInfo);
+                if (StringUtils.isNotBlank(tokenInfo.role) && StringUtils.equals("admin", tokenInfo.role))
+                {
+                    String pathToSchema = "SCHEMA__" + getPathToSchema(benefitBody);
+                    Validate.notNull(pathToSchema);
+                    if (_schemaService.validateSchema(pathToSchema, benefitBody))
+                    {
+                        JSONObject result = _planService.addBenefitToPlan(benefitBody, planUid);
+                        Validate.notNull(result);
+                        PlanAggregate responseEntity = new PlanAggregate();
+                        responseEntity._id = (String) result.get("_id");
+                        processETag(response, result);
+                        responseEntity._objectInfo = result;
+                        return responseEntity;
+                    }
+                    else {
+                        response.sendError(401, "Bad Schema. Please check schema or add ObjectName field in the payload");
+                    }
+                }
+                else {
+                    response.sendError(403, "Admin role is needed to perform this action. Consider getting an admin token");
+                }
+            }
+        } catch (ExpiredJwtException e) {
+            response.sendError(401, "Token is expired. Exception: " + e.toString());
+        } catch (SignatureException | MalformedJwtException e) {
+            response.sendError(401, "Token is malformed. Exception: " + e.toString());
+        } catch (ProcessingException e) {
+            response.sendError(401, "Bad Schema. Please check schema or add ObjectName field in the payload. More Info: " + e.toString());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private void processETag(HttpServletResponse response, JSONObject responseObject) {
         String eTag = (String) responseObject.get("ETag");
         if (StringUtils.isNotBlank(eTag)) {
