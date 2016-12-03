@@ -15,7 +15,6 @@ import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.elasticsearch.ResourceNotFoundException;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -153,23 +152,20 @@ public class PlanController {
     @ResponseBody
     @RequestMapping(value = "/{uid}/benefit", method = RequestMethod.PUT)
     public PlanAggregate addBenefitToPlan(@ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
-                                    @RequestHeader(required = true) String token,
-                                    @ApiParam(value = "Uid of the plan for which benefit to be added")
-                                    @PathVariable("uid") String planUid,
-                                    @ApiParam(value = "JSON Body for benefit. Refer to Schemas for more info")
-                                    @RequestBody String benefitBody,
-                                    HttpServletResponse response) throws IOException {
+                                          @RequestHeader(required = true) String token,
+                                          @ApiParam(value = "Uid of the plan for which benefit to be added")
+                                          @PathVariable("uid") String planUid,
+                                          @ApiParam(value = "JSON Body for benefit. Refer to Schemas for more info")
+                                          @RequestBody String benefitBody,
+                                          HttpServletResponse response) throws IOException {
         try {
-            if (_tokenService.isTokenValidated(token, "Sample String"))
-            {
+            if (_tokenService.isTokenValidated(token, "Sample String")) {
                 TokenService.TokenInfo tokenInfo = _tokenService.getTokenInfo(token);
                 Validate.notNull(tokenInfo);
-                if (StringUtils.isNotBlank(tokenInfo.role) && StringUtils.equals("admin", tokenInfo.role))
-                {
+                if (StringUtils.isNotBlank(tokenInfo.role) && StringUtils.equals("admin", tokenInfo.role)) {
                     String pathToSchema = "SCHEMA__" + getPathToSchema(benefitBody);
                     Validate.notNull(pathToSchema);
-                    if (_schemaService.validateSchema(pathToSchema, benefitBody))
-                    {
+                    if (_schemaService.validateSchema(pathToSchema, benefitBody)) {
                         JSONObject result = _planService.addBenefitToPlan(benefitBody, planUid);
                         Validate.notNull(result);
                         PlanAggregate responseEntity = new PlanAggregate();
@@ -177,12 +173,10 @@ public class PlanController {
                         processETag(response, result);
                         responseEntity._objectInfo = result;
                         return responseEntity;
-                    }
-                    else {
+                    } else {
                         response.sendError(401, "Bad Schema. Please check schema or add ObjectName field in the payload");
                     }
-                }
-                else {
+                } else {
                     response.sendError(403, "Admin role is needed to perform this action. Consider getting an admin token");
                 }
             }
@@ -200,8 +194,7 @@ public class PlanController {
 
     @ResponseBody
     @RequestMapping(value = "/search", method = RequestMethod.GET)
-    public String getPlanUsingParameters()
-    {
+    public String getPlanUsingParameters() {
         return null;
     }
 
@@ -209,44 +202,39 @@ public class PlanController {
     @ResponseBody
     @RequestMapping(value = "/{uid}/benefit/{benefitUid}", method = RequestMethod.PATCH)
     public PlanAggregate patchBenefit(@ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
-                                          @RequestHeader(required = true) String token,
+                                      @RequestHeader(required = true) String token,
                                       @ApiParam(value = "Uid of the plan for which benefit to be added")
-                                          @PathVariable("uid") String planUid,
+                                      @PathVariable("uid") String planUid,
                                       HttpServletResponse response,
                                       @ApiParam(value = "Uid of the benefit for which benefit to be added")
                                       @PathVariable("benefitUid") String benefitUid,
                                       @ApiParam(value = "Body to be patched")
                                       @RequestBody String benefitData) throws IOException {
         try {
-            if (_tokenService.isTokenValidated(token, "Sample String"))
-            {
+            if (_tokenService.isTokenValidated(token, "Sample String")) {
                 TokenService.TokenInfo tokenInfo = _tokenService.getTokenInfo(token);
                 Validate.notNull(tokenInfo);
-                Integer flag = 0 ;
-                if (StringUtils.isNotBlank(tokenInfo.role) && StringUtils.equals("admin", tokenInfo.role))
-                {
+                Integer flag = 0;
+                if (StringUtils.isNotBlank(tokenInfo.role) && StringUtils.equals("admin", tokenInfo.role)) {
                     JSONObject plan = null;
                     try {
                         plan = _planService.getPlan(planUid);
                         Validate.notNull(plan);
                         List<JSONObject> benefits = (ArrayList<JSONObject>) plan.get("benefit");
                         Validate.notNull(benefits);
-                        for (JSONObject object : benefits)
-                        {
-                            if (object.containsValue(benefitUid))
-                            {
+                        for (JSONObject object : benefits) {
+                            if (object.containsValue(benefitUid)) {
                                 JSONObject objectToBePatched = (JSONObject) new JSONParser().parse(benefitData);
                                 JSONObject result = _planService.patchBenefitOfThePlan(planUid, object, objectToBePatched);
                                 Validate.notNull(result);
                                 PlanAggregate responseObject = new PlanAggregate();
                                 responseObject._id = (String) result.get("_id");
                                 responseObject._objectInfo = result;
-                                flag =1 ;
+                                flag = 1;
                                 return responseObject;
                             }
                         }
-                        if (flag == 0)
-                        {
+                        if (flag == 0) {
                             response.sendError(404, "Benefit not found");
                         }
                     } catch (ResourceNotFoundException e) {
@@ -254,8 +242,7 @@ public class PlanController {
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
-                }
-                else {
+                } else {
                     response.sendError(403, "Admin role is needed to perform this action. Consider getting an admin token");
                 }
             }
@@ -265,6 +252,30 @@ public class PlanController {
             response.sendError(401, "Token is malformed. Exception: " + e.toString());
         }
         return null;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/{uid}", method = RequestMethod.DELETE)
+    public Boolean deletePlan(@ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
+                              @RequestHeader(required = true) String token,
+                              @PathVariable("uid") String planUid,
+                              HttpServletResponse response,
+                              HttpServletRequest request) throws IOException {
+        try {
+            if (_tokenService.isTokenValidated(token, "SampleString")) {
+                try {
+                    Boolean aBoolean = _planService.deletePlan(planUid);
+                    return aBoolean;
+                } catch (ResourceNotFoundException e) {
+                    response.sendError(404, "Plan not found");
+                }
+            }
+        } catch (ExpiredJwtException e) {
+            response.sendError(401, "Token is expired. Exception: " + e.toString());
+        } catch (SignatureException | MalformedJwtException e) {
+            response.sendError(401, "Token is malformed. Exception: " + e.toString());
+        }
+        return Boolean.FALSE;
     }
 
     private void processETag(HttpServletResponse response, JSONObject responseObject) {
