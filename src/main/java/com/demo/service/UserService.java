@@ -60,4 +60,12 @@ public interface UserService {
      * @return
      */
     Boolean deleteUser(String userUid);
+
+    /**
+     *
+     * @param userUid
+     * @param tokenObject
+     * @return
+     */
+    Boolean addTokenToUser(String userUid, JSONObject tokenObject);
 }

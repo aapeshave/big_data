@@ -3,7 +3,6 @@ package com.demo.service.impl;
 import com.demo.controller.AccessTokenController;
 import com.demo.pojo.AccessToken;
 import com.demo.service.TokenService;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -102,8 +101,8 @@ public class TokenServiceImpl
                 .signWith(signatureAlgorithm, signingKey);
 
         builder.setExpiration(getNextYearDate());
-        String key = userUid.split("__", 2)[1];
-        String tokenId = TOKEN_PREFIX + key;
+        // String key = userUid.split("__", 2)[1];
+        String tokenId = TOKEN_PREFIX + jedis.get(TOKEN_COUNT);
         AccessToken token = new AccessToken(tokenId, ISSUER, getNextYearDate(), URL, role, builder.compact());
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);

@@ -2,9 +2,13 @@ package com.demo.controller;
 
 
 import com.demo.service.TokenService;
+import com.demo.service.UserService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.jsonwebtoken.*;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.parsing.Location;
 import org.springframework.web.bind.annotation.*;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -23,6 +27,9 @@ public class AccessTokenController {
 
     @Autowired
     TokenService _tokenService;
+
+    @Autowired
+    UserService _userService;
 
     private static final String API_SECRET = "aap1212";
 
@@ -52,13 +59,34 @@ public class AccessTokenController {
 
     @POST
     @RequestMapping("/new")
-    public String createTokenForUser(@RequestHeader String token,
-                                     @RequestParam String roleName,
-                                     @RequestParam String subject,
-                                     HttpServletResponse response) throws IOException {
+    public TokenEntity createTokenForUser(@RequestHeader String token,
+                                          @RequestParam String roleName,
+                                          @RequestParam String subject,
+                                          HttpServletResponse response) throws IOException {
         try {
-            response.sendError(405, "Method not Implemented");
-        } catch (ExpiredJwtException | SignatureException | MalformedJwtException e) {
+            if (_tokenService.isTokenValidated(token, "Sample")) {
+                String userUid = _tokenService.getUserIdFromToken(token);
+                JSONObject accessToken = _tokenService.createAccessToken(userUid, roleName, subject);
+                System.out.println("Created Token with uid: " + accessToken.get("tokenId"));
+                if (_userService.addTokenToUser(userUid, accessToken)) {
+                    TokenEntity responseEntity = new TokenEntity();
+                    responseEntity.id = (String) accessToken.get("tokenUid");
+                    responseEntity.subject = subject;
+                    responseEntity.issuer = (String) accessToken.get("issuer");
+                    responseEntity.userUid = userUid;
+                    responseEntity.ttlMillis = (Long) accessToken.get("validTill");
+                    return responseEntity;
+                } else {
+                    response.sendError(500, "Token creation failed");
+                }
+            }
+        } catch (ExpiredJwtException e) {
+            response.sendError(429, "Token is expired");
+        } catch (SignatureException e) {
+            response.sendError(403, "Can not validate token");
+        } catch (MalformedJwtException e) {
+            response.sendError(401, "Bad Request. Malformed JWT");
+        } catch (ParseException e) {
             e.printStackTrace();
         }
         return null;
@@ -96,7 +124,9 @@ public class AccessTokenController {
         public String issuer;
         @JsonProperty(required = true)
         public String subject;
+        @JsonProperty(required = false)
+        public String userUid;
         @JsonProperty
-        public long ttlMillis;
+        public Long ttlMillis;
     }
 }

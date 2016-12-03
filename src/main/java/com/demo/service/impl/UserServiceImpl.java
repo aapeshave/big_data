@@ -393,6 +393,36 @@ public class UserServiceImpl
         return Boolean.FALSE;
     }
 
+    @Override
+    public Boolean addTokenToUser(String userUid, JSONObject tokenObject) {
+        Jedis jedis = new Jedis("localhost");
+        try {
+            String tokenUid = (String) tokenObject.get("tokenId");
+            Validate.notEmpty(tokenUid);
+            JSONObject userMetaData = (JSONObject) new JSONParser().parse(jedis.get(userUid));
+            JSONArray tokens = (JSONArray) userMetaData.get("token");
+
+            JSONObject toPutInArray = new JSONObject();
+            toPutInArray.put((tokens.size() + 1), tokenObject.get("tokenId"));
+            tokens.add(toPutInArray);
+
+            userMetaData.replace("eTag", calculateETag(userMetaData));
+            userMetaData.put("_modifiedOn", getUnixTimestamp());
+
+            jedis.set(userUid, userMetaData.toJSONString());
+            _queueService.sendMessage(userMetaData);
+            return Boolean.TRUE;
+
+        } catch (ParseException e) {
+            log.error("Failed while parsing. Exception: " + e);
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } finally {
+            jedis.close();
+        }
+        return Boolean.FALSE;
+    }
+
     private long deleteUser(JSONObject object, Jedis jedis) {
         long result = 0;
         if (object != null) {
