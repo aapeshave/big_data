@@ -148,7 +148,6 @@ public class PlanServiceImpl implements PlanService {
             plan.remove("benefit");
             plan.remove("ETag");
 
-
             ObjectMapper mapper = new ObjectMapper();
             try {
                 JsonNode jsonNode = mapper.readTree(benefitObject);

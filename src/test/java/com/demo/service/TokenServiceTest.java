@@ -38,4 +38,11 @@ public class TokenServiceTest {
     public void testCreateAccessToken1() throws Exception {
 
     }
+
+    @Test
+    public void testAddTokenToUser() throws Exception {
+        String token = "eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI0MyIsImlhdCI6MTQ4MDc3NjIyNCwic3ViIjoiQUNDRVNTX1RPS0VOIiwiaXNzIjoiREVNTy5JTkMiLCJ1c2VyIjoidXNlcl9fNDYiLCJ1cmwiOiJodHRwOi8vd3d3LmV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNTEyMzEyMjI0fQ.MlxU-2lcx9xz-WL68YvqbW37twPeNNIomUc9pE2XcuY";
+        String roleName = "admin";
+        String subject = "ACCESS_TOKEN";
+    }
 }
