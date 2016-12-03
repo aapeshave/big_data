@@ -155,12 +155,15 @@ public class SchemaServiceImpl implements SchemaService {
     }
 
     @Override
-    public String patchSchema(String pathToSchema, String parameterName, String parameterValue) {
-        String parentSchemaString = getSchemaFromRedis(pathToSchema);
-        if (!StringUtils.isBlank(parentSchemaString)) {
+    public String patchSchema(String pathToSchema, JSONObject toChange, String parameterName) throws ResourceNotFoundException {
+        String schemaToBeUpdated = getSchemaFromRedis(pathToSchema);
+        if (!StringUtils.isBlank(schemaToBeUpdated)) {
             try {
-                JSONObject parentSchemaObject = (JSONObject) new JSONParser().parse(parentSchemaString);
-                return parentSchemaObject.toJSONString();
+                JSONObject parentSchemaObject = (JSONObject) new JSONParser().parse(schemaToBeUpdated);
+                JSONObject propertiesObject = (JSONObject) parentSchemaObject.get("properties");
+                propertiesObject.put(parameterName, toChange);
+                String newSchema = addNewSchema(parentSchemaObject.toJSONString());
+                return newSchema;
             } catch (ParseException e) {
                 e.printStackTrace();
             }

@@ -1,6 +1,8 @@
 package com.demo.service;
 
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
+import org.elasticsearch.ResourceNotFoundException;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
@@ -51,5 +53,12 @@ public interface SchemaService {
      */
     String addNewSchema(String schemaBody);
 
-    String patchSchema(String pathToSchema, String parameterName, String parameterValue);
+    /**
+     *
+     * @param pathToSchema path of the schema to be changed
+     * @param toChange body of the object to be changed
+     * @param paramterName
+     * @return return the result
+     */
+    String patchSchema(String pathToSchema, JSONObject toChange, String paramterName) throws ResourceNotFoundException;
 }

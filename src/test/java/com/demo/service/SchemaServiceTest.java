@@ -2,6 +2,7 @@ package com.demo.service;
 
 import com.demo.service.impl.SchemaServiceImpl;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
+import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -228,11 +229,10 @@ public class SchemaServiceTest {
 
     @Test
     public void testPatchSchema() throws Exception {
-        String pathToSchema = "SCHEMA__user";
-        String parameterName = "address";
-        String parameterValue = SCHEMA__address;
-
-        String result = schemaService.patchSchema(pathToSchema, parameterName, parameterValue);
+        String pathToSchema = "SCHEMA__plan";
+        JSONObject type = new JSONObject();
+        type.put("type", "String");
+        String result = schemaService.patchSchema(pathToSchema, type, "sample");
         Assert.assertNotNull(result);
     }
 }
