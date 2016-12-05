@@ -26,15 +26,10 @@ public class TokenServiceImpl
         implements TokenService {
 
     private static final String TOKEN_PREFIX = "token" + "__";
-
-    private String TOKEN_COUNT = "TOKEN_COUNT";
-
     private static final String API_SECRET = "aap1212";
-
     private static final String ISSUER = "DEMO.INC";
-
     private static final String URL = "http://www.example.com";
-
+    private String TOKEN_COUNT = "TOKEN_COUNT";
     private Log log = LogFactory.getLog(TokenServiceImpl.class);
 
     @Override
