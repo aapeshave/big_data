@@ -56,6 +56,6 @@ public interface TokenService {
         @JsonProperty(required = true) public String tokenId;
         @JsonProperty(required = true) public String userUid;
         @JsonProperty(required = true) public String role;
-        @JsonProperty(required = false) public String issuer;
+        @JsonProperty() public String issuer;
     }
 }
