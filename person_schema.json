@@ -1,42 +1,30 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "type": "object",
   "objectName": "person",
+  "additionalProperties": false,
+  "type": "object",
   "properties": {
-    "objectName": {
-      "type": "string"
-    },
     "firstName": {
       "type": "string"
     },
     "lastName": {
       "type": "string"
     },
-    "email": {
+    "address": {
       "type": "array",
-      "objectName": "email",
       "items": {
+        "objectName": "address",
         "type": "object",
         "properties": {
-          "objectName": {
+          "country": {
             "type": "string"
           },
-          "emailAddress": {
+          "zipCode": {
             "type": "string"
-          }
-        },
-        "required": [
-          "objectName",
-          "emailAddress"
-        ]
-      }
-    },
-    "address": {
-      "objectName": "address",
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
+          },
+          "city": {
+            "type": "string"
+          },
           "objectName": {
             "type": "string"
           },
@@ -46,27 +34,76 @@
           "street2": {
             "type": "string"
           },
-          "city": {
-            "type": "string"
-          },
           "state": {
-            "type": "string"
-          },
-          "country": {
-            "type": "string"
-          },
-          "zipCode": {
             "type": "string"
           }
         },
         "required": [
           "objectName",
           "street1",
-          "street2",
           "city",
           "state",
           "country",
           "zipCode"
+        ]
+      }
+    },
+    "objectName": {
+      "type": "string"
+    },
+    "user": {
+      "objectName": "user",
+      "type": "object",
+      "properties": {
+        "password": {
+          "type": "string"
+        },
+        "role": {
+          "objectName": "role",
+          "type": "object",
+          "properties": {
+            "roleName": {
+              "type": "string"
+            },
+            "objectName": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "roleName",
+            "objectName"
+          ]
+        },
+        "objectName": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "password",
+        "role",
+        "objectName",
+        "username"
+      ]
+    },
+    "email": {
+      "type": "array",
+      "items": {
+        "objectName": "email",
+        "type": "object",
+        "properties": {
+          "emailAddress": {
+            "type": "string"
+          },
+          "objectName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "objectName",
+          "emailAddress"
         ]
       }
     }
@@ -75,6 +112,7 @@
     "objectName",
     "firstName",
     "lastName",
-    "email"
+    "email",
+    "address"
   ]
 }
