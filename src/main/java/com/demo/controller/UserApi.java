@@ -3,13 +3,13 @@ package com.demo.controller;
 import com.demo.service.SchemaService;
 import com.demo.service.TokenService;
 import com.demo.service.UserService;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.*;
 import org.apache.commons.lang.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.ResourceNotFoundException;
@@ -32,8 +32,8 @@ import java.security.NoSuchAlgorithmException;
  */
 
 @Controller
-@Api(description = "Create a new user")
-public class UserController {
+@Api(description = "Api to perform CRUD operations on User")
+public class UserApi {
 
     @Autowired
     SchemaService schemaService;
@@ -44,8 +44,7 @@ public class UserController {
     @Autowired
     TokenService tokenService;
 
-    @POST
-    @RequestMapping("/user")
+    @RequestMapping(value = "/user", method = RequestMethod.POST)
     @ApiOperation(value = "Create a user",
             response = String.class, consumes = "application/json")
     @ResponseBody
@@ -71,8 +70,7 @@ public class UserController {
         return null;
     }
 
-    @GET
-    @RequestMapping("/user/{userUid}")
+    @RequestMapping(value = "/user/{userUid}", method = RequestMethod.GET)
     @ResponseBody
     public String getPerson(@PathVariable("userUid") String userUid) {
         if (!userUid.isEmpty()) {
@@ -91,8 +89,8 @@ public class UserController {
         }
     }
 
-    @RequestMapping(value = "/user/{userUid}", method = RequestMethod.PATCH)
     @ResponseBody
+    @RequestMapping(value = "/user/{userUid}", method = RequestMethod.PATCH)
     public String patchUser(@PathVariable("userUid") String userUid,
                             @RequestHeader String token,
                             @RequestParam String parameterName,
@@ -133,8 +131,7 @@ public class UserController {
         return Boolean.FALSE;
     }
 
-    @POST
-    @RequestMapping("/v1/user")
+    @RequestMapping(value = "/v1/user", method = RequestMethod.POST)
     @ResponseBody
     public String newAddUser(@RequestBody String body, HttpServletResponse response) throws IOException, ProcessingException {
         try {
@@ -243,5 +240,32 @@ public class UserController {
             response.sendError(401, "Authorization Failed");
         }
         return null;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/v1/user/search", method = RequestMethod.GET)
+    @ApiOperation(value = "Search user based on the search model", response = String.class, notes = "Authorization token is need. Role Supported Admin")
+    public String searchUser(@ApiParam(value = "Authentication Token. It is usually created when you create User Account.")
+                             @RequestHeader(required = true) String token,
+                             @RequestParam(required = true) UserSearchEntity userSearchEntity,
+                             HttpServletResponse response,
+                             HttpServletRequest request) throws IOException {
+        return null;
+    }
+
+    @ApiModel(description = "Search Model for User Search")
+    public static class UserSearchEntity {
+        @ApiModelProperty(value = "Identifier. Use this to Request Seach User from Server")
+        @JsonProperty(required = false)
+        String _id;
+        @ApiModelProperty(value = "Date after which user is created")
+        @JsonProperty(required = true)
+        String _createdAfter;
+        @ApiModelProperty(value = "Date before which user is created")
+        @JsonProperty(required = true)
+        String _createdBefore;
+        @ApiModelProperty(value = "Username used for searching")
+        @JsonProperty(required = true)
+        String _username;
     }
 }
