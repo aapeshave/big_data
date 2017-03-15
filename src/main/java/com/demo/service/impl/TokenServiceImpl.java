@@ -1,6 +1,5 @@
 package com.demo.service.impl;
 
-import com.demo.controller.AccessTokenController;
 import com.demo.pojo.AccessToken;
 import com.demo.service.TokenService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -34,11 +33,6 @@ public class TokenServiceImpl
     private Log log = LogFactory.getLog(TokenServiceImpl.class);
 
     @Override
-    public AccessToken createAccessToken(AccessTokenController.TokenEntity tokenEntity, String userUid) {
-        return null;
-    }
-
-    @Override
     public Boolean isTokenValidated(String tokenBody, String userUid) throws ExpiredJwtException, SignatureException, MalformedJwtException {
         log.info("Validating token");
         Claims claims;
@@ -49,10 +43,7 @@ public class TokenServiceImpl
             log.info("Token validated for user: " + claims.get("user"));
             log.debug("Token Validation Finished");
             return Boolean.TRUE;
-        } catch (UnsupportedJwtException e) {
-            log.error(e);
-            return Boolean.FALSE;
-        } catch (IllegalArgumentException e) {
+        } catch (UnsupportedJwtException | IllegalArgumentException e) {
             log.error(e);
             return Boolean.FALSE;
         }

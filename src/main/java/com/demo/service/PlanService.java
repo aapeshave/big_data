@@ -23,7 +23,7 @@ public interface PlanService {
 
     /**
      * @param benefitObject to be added
-     * @param planUid
+     * @param planUid to locate plan
      * @return plan object
      */
     JSONObject addBenefitToPlan(String benefitObject, String planUid) throws ResourceNotFoundException, ParseException;
@@ -31,7 +31,7 @@ public interface PlanService {
     /**
      * @param planKey         Found plan object in the database
      * @param benefitObject   Object to be replaced in the database
-     * @param dataToBePatched
+     * @param dataToBePatched JSONObject to be patched
      * @return plan object
      */
     JSONObject patchBenefitOfThePlan(String planKey, JSONObject benefitObject, JSONObject dataToBePatched) throws ParseException;
