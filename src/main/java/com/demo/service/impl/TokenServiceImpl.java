@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.impl.DefaultJwsHeader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
@@ -67,26 +68,12 @@ public class TokenServiceImpl
 
     @Override
     public AccessToken createAccessTokenAPI(String userUid, String role, String subject) throws JsonProcessingException {
-        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
-
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);
 
-        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(API_SECRET);
-        Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
-
         Jedis jedis = getJedis();
 
-        JwtBuilder builder = Jwts.builder().setId(jedis.get(TOKEN_COUNT))
-                .setIssuedAt(now)
-                .setSubject(subject)
-                .setIssuer(ISSUER)
-                .claim("user", userUid)
-                .claim("url", URL)
-                .claim("role", role)
-                .signWith(signatureAlgorithm, signingKey);
-
-        builder.setExpiration(getNextYearDate());
+        JwtBuilder builder = getJwtBuilder(userUid, role, subject, now, jedis.get(TOKEN_COUNT));
         // String key = userUid.split("__", 2)[1];
         String tokenId = TOKEN_PREFIX + jedis.get(TOKEN_COUNT);
         AccessToken token = new AccessToken(tokenId, ISSUER, getNextYearDate(), URL, role, builder.compact());
@@ -141,5 +128,23 @@ public class TokenServiceImpl
         Jedis jedis = new Jedis("localhost");
         jedis.incr(TOKEN_COUNT);
         return jedis;
+    }
+
+    private JwtBuilder getJwtBuilder(String userUid, String role, String subject, Date issuingDate, String Id) {
+        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
+        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(API_SECRET);
+        Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
+
+        JwtBuilder builder = Jwts.builder().setId(Id)
+                .setIssuedAt(issuingDate)
+                .setSubject(subject)
+                .setIssuer(ISSUER)
+                .claim("user", userUid)
+                .claim("url", URL)
+                .claim("role", role)
+                .signWith(signatureAlgorithm, signingKey);
+
+        builder.setExpiration(getNextYearDate());
+        return builder;
     }
 }
